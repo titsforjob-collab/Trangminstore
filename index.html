@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đặt Đơn Hàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hidden { display: none !important; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 500; transform: translateX(150%); transition: transform 0.3s ease; z-index: 50; }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background-color: #10B981; }
+        .toast.error { background-color: #EF4444; }
+        .status-cho-xu-ly { background-color: #FEF3C7; color: #D97706; }
+        .status-da-dat { background-color: #D1FAE5; color: #059669; }
+    </style>
+</head>
+<body>
+
+    <div id="authPage" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-effect p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"><i class="fas fa-box-open text-white text-2xl"></i></div>
+                <h2 class="text-2xl font-bold text-gray-900" id="authTitle">Đăng Nhập</h2>
+            </div>
+
+            <form id="authForm" class="space-y-4">
+                <div id="usernameField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tên Zalo (Để kích hoạt tài khoản)</label>
+                    <input type="text" id="regUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Thị Nở xink">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                    <input type="tel" id="authPhone" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Dùng để đăng nhập">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="authPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+                </div>
+
+                <button type="submit" id="authBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">Vào hệ thống</button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <span class="text-gray-600" id="authSwitchText">Chưa có tài khoản?</span>
+                <button onclick="toggleAuthMode()" class="text-blue-600 font-semibold hover:underline ml-1" id="authSwitchBtn">Đăng ký ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardPage" class="hidden min-h-screen">
+        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow"><i class="fas fa-cube text-white"></i></div>
+                    <span class="font-bold text-xl text-gray-900">Trangmin.store</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full" id="userDisplayName">...</span>
+                    <button onclick="logout()" class="text-red-500 text-sm font-medium"><i class="fas fa-sign-out-alt mr-1"></i>Thoát</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white">
+                    <p class="text-blue-100 text-sm mb-1">Số dư của <span id="userNameHello">...</span></p>
+                    <h3 class="text-4xl font-bold" id="balanceDisplay">--- đ</h3>
+                    <button onclick="openDepositModal()" class="mt-6 bg-white text-blue-700 px-5 py-2.5 rounded-lg font-bold text-sm shadow">Nạp tiền ngay</button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border p-6 text-center">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-plus"></i></div>
+                    <button onclick="openOrderModal()" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium">Tạo đơn mới</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-clock text-yellow-500 mr-2"></i>Đang xử lý</p>
+                        <h4 class="text-2xl font-bold text-gray-900" id="countPending">0</h4>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành</p>
+                        <h4 class="text-2xl font-bold text-gray-900" id="countCompleted">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-900">Đơn hàng gần đây</h3>
+                    <button onclick="loadOrders()" class="text-blue-600 text-sm"><i class="fas fa-sync-alt mr-1"></i>Làm mới</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                            <tr>
+                                <th class="px-6 py-3 text-left">Mã đơn</th>
+                                <th class="px-6 py-3 text-left">Sản phẩm</th>
+                                <th class="px-6 py-3 text-center">SL</th>
+                                <th class="px-6 py-3 text-left">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="depositModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <h3 class="font-bold text-lg mb-2">Quét mã QR để nạp tiền</h3>
+            <p class="text-sm text-gray-500 mb-4">Quét mã bằng App Ngân hàng hoặc Momo</p>
+
+            <img id="qrCodeImg" src="" alt="Mã QR Nạp Tiền" class="w-48 h-48 mx-auto border p-2 rounded-lg mb-4">
+
+            <div class="bg-gray-50 p-3 rounded-lg text-left text-sm mb-4">
+                <p class="flex items-center justify-center gap-2">Nội dung CK: 
+                    <strong id="transferContent" class="text-red-600 font-bold text-lg"></strong>
+                    <button onclick="copyTransferContent()" class="text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded text-xs"><i class="fas fa-copy"></i> Copy</button>
+                </p>
+                <p class="text-xs text-gray-500 mt-1 italic text-center">*Nội dung CK bắt buộc phải nhập đúng như trên để hệ thống tự động cộng tiền.</p>
+            </div>
+
+            <button onclick="closeDepositModal()" class="w-full bg-gray-200 text-gray-700 hover:bg-gray-300 px-6 py-2 rounded-lg font-bold transition">Đóng</button>
+        </div>
+    </div>
+
+    <div id="orderModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="font-bold text-lg mb-4">Gửi Yêu Cầu Đặt Đơn</h3>
+            <form id="orderForm" class="space-y-4">
+                <input type="url" id="orderLink" required class="w-full px-4 py-2 rounded-lg border" placeholder="Link sản phẩm Shopee">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="orderQty" required min="1" value="1" class="w-full px-4 py-2 rounded-lg border" placeholder="Số lượng">
+                    <input type="text" id="orderNote" class="w-full px-4 py-2 rounded-lg border" placeholder="Ghi chú (Màu/Size)">
+                </div>
+                <div class="space-y-3 pt-4 border-t">
+                    <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
+                    <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
+                    <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
+                    <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
+                </div>
+                <div class="space-y-2 pt-4 border-t">
+    <h4 class="font-bold text-sm text-gray-800">Chọn loại mã áp dụng</h4>
+    <div class="grid grid-cols-2 gap-3">
+        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-blue-500 bg-blue-50">
+            <input type="radio" name="couponType" value="80" checked class="mr-2">
+            <div class="text-xs">
+                <p class="font-bold text-blue-600">Mã 80K</p>
+                <p class="text-gray-500">Phí: 31.000đ</p>
+            </div>
+        </label>
+        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
+            <input type="radio" name="couponType" value="100" class="mr-2">
+            <div class="text-xs">
+                <p class="font-bold text-blue-600">Mã 100K (hiện đang hết)</p>
+                <p class="text-gray-500">Phí: 41.000đ</p>
+            </div>
+        </label>
+    </div>
+</div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="closeOrderModal()" class="text-gray-500">Hủy</button>
+                    <button type="submit" id="submitOrderBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Gửi Đơn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxXFjzKLhHv5OTMMyGtSiIG9QLnnjvTEItOCZf6leDBiK0r9ZazGZ_QkCma9GwO7nCezQ/exec"; // QUAN TRỌNG: Dán link API của anh vào đây!
+
+        let isLoginMode = true;
+        let currentUserPhone = localStorage.getItem('userPhone') || null;
+        let currentUserName = localStorage.getItem('userName') || "...";
+
+        window.onload = () => {
+            if (currentUserPhone) {
+                showDashboard();
+                loadOrders();
+                fetchBalance();
+            } else {
+                showAuth();
+            }
+        };
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').textContent = isLoginMode ? 'Đăng Nhập' : 'Đăng Ký';
+            document.getElementById('authBtn').textContent = isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản';
+            document.getElementById('usernameField').classList.toggle('hidden');
+            document.getElementById('authSwitchBtn').textContent = isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập';
+        }
+
+        function showAuth() { document.getElementById('authPage').classList.remove('hidden'); document.getElementById('dashboardPage').classList.add('hidden'); }
+        
+        function showDashboard() {
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            document.getElementById('userDisplayName').textContent = currentUserName;
+            document.getElementById('userNameHello').textContent = currentUserName;
+            document.getElementById('balanceDisplay').textContent = localStorage.getItem('userBalance') || "0 đ";
+        }
+        
+        function fetchBalance() {
+            document.getElementById('balanceDisplay').textContent = "Đang tải...";
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: "get_balance", phone: currentUserPhone }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    const tienMoi = new Intl.NumberFormat('vi-VN').format(data.balance) + " đ";
+                    document.getElementById('balanceDisplay').textContent = tienMoi;
+                    localStorage.setItem('userBalance', tienMoi); // Lưu đè vào bộ nhớ tạm
+                }
+            });
+        }    
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        function openOrderModal() { document.getElementById('orderModal').classList.remove('hidden'); }
+        function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); document.getElementById('orderForm').reset(); }
+        document.querySelectorAll('input[name="couponType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('input[name="couponType"]').forEach(r => {
+            r.closest('label').classList.remove('border-purple-500', 'bg-blue-50');
+            r.closest('label').classList.add('border-gray-200');
+        });
+        if (this.checked) {
+            this.closest('label').classList.remove('border-gray-200');
+            this.closest('label').classList.add('border-purple-500', 'bg-blue-50');
+        }
+    });
+});
+        function openDepositModal() {
+            // 1. Tạo "áo khoác" ngụy trang cho giao dịch
+            const nguoiTrang = ["Tra tien an trua ", "Thanh toan do ", "Tra tien hom truoc ", "Chuyen tien "];
+            const randomText = nguoiTrang[Math.floor(Math.random() * nguoiTrang.length)];
+            
+            // Nội dung sẽ là: "Tra tien do 0987654321"
+            const noidung = randomText + currentUserPhone.slice(-6); 
+            document.getElementById('transferContent').textContent = noidung;
+
+            const bankId = "MBBank"; // Mã ngân hàng của anh
+            const accountNo = "9669696969666"; // STK của anh
+            const accountName = "NGUYEN TUAN PHONG"; // Tên của anh
+
+            // Phải bọc encodeURIComponent để link QR không bị lỗi khoảng trắng
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=0&addInfo=${encodeURIComponent(noidung)}&accountName=${encodeURIComponent(accountName)}`;
+            document.getElementById('qrCodeImg').src = qrUrl;
+
+            document.getElementById('depositModal').classList.remove('hidden');
+        }
+
+        // Hàm Copy
+        function copyTransferContent() {
+            const text = document.getElementById('transferContent').textContent;
+            navigator.clipboard.writeText(text);
+            showToast("Đã copy nội dung CK!", "success");
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').classList.add('hidden');
+        }
+
+        // XỬ LÝ ĐĂNG NHẬP / ĐĂNG KÝ
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('authPhone').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const btn = document.getElementById('authBtn');
+            btn.textContent = 'Đang xử lý...'; btn.disabled = true;
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: isLoginMode ? "login" : "register",
+                    phone: phone,
+                    password: password,
+                    username: username
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản'; btn.disabled = false;
+                if (data.success) {
+                    if (isLoginMode) {
+                        localStorage.setItem('userPhone', phone);
+                        localStorage.setItem('userName', data.username);
+                        localStorage.setItem('userBalance', new Intl.NumberFormat('vi-VN').format(data.balance) + " đ");
+                        location.reload();
+                    } else {
+                        showToast(data.message, 'success');
+                        setTimeout(toggleAuthMode, 2000);
+                    }
+                } else { showToast(data.message, 'error'); }
+            });
+        });
+
+        // TẠO ĐƠN & LOAD ĐƠN (Giữ nguyên logic cũ nhưng đổi màu trạng thái)
+        function loadOrders() {
+            const table = document.getElementById('orderTableBody');
+            table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Đang tải đơn...</td></tr>';
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "get_orders", phone: currentUserPhone }) })
+            .then(res => res.json())
+            .then(data => {
+                table.innerHTML = '';
+                // 1. Khai báo 2 biến để đếm số lượng
+                let countPending = 0;
+                let countCompleted = 0;
+
+                if(data.orders && data.orders.length > 0) {
+                    data.orders.forEach(o => {
+                        // 2. Phân loại trạng thái để đếm
+                        const statusLower = o.status.toLowerCase();
+                        if (statusLower.includes('chờ') || statusLower.includes('đang')) {
+                            countPending++; // Nếu trạng thái có chữ "chờ" hoặc "đang" thì +1 vào Đang xử lý
+                        } else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                            countCompleted++; // Nếu có chữ "hoàn thành" hoặc "thành công" thì +1 vào Hoàn thành
+                        }
+
+                        // 3. Vẫn vẽ bảng danh sách đơn như cũ
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td class="px-6 py-4 font-bold text-gray-500">${o.orderId.slice(-6)}</td><td class="px-6 py-4 truncate max-w-[150px]"><a href="${o.link}" target="_blank" class="text-blue-600">${o.link}</a></td><td class="px-6 py-4 text-center font-bold">${o.qty}</td><td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${o.status == 'Đã đặt' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}">${o.status}</span></td>`;
+                        table.appendChild(tr);
+                    });
+                } else { 
+                    table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Chưa có đơn nào</td></tr>'; 
+                }
+                
+                // 4. Bắn con số vừa đếm được lên giao diện
+                document.getElementById('countPending').textContent = countPending;
+                document.getElementById('countCompleted').textContent = countCompleted;
+            });
+        }
+
+        // TẠO ĐƠN (Nâng cấp chọn mã 80k/100k)
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitOrderBtn');
+            btn.textContent = 'Đang xử lý...'; btn.disabled = true;
+            
+            // --- LOGIC TÍNH TIỀN THEO MÃ ---
+            const qty = parseInt(document.getElementById('orderQty').value) || 1;
+            const couponValue = document.querySelector('input[name="couponType"]:checked').value;
+            
+            let pricePerItem = 0;
+            if (couponValue === "80") {
+                pricePerItem = 31000; // Mã 80k thì lấy phí 31k
+            } else if (couponValue === "100") {
+                pricePerItem = 41000; // Mã 100k thì lấy phí 41k
+            }
+            
+            const totalAmount = qty * pricePerItem;
+            // ------------------------------
+
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: "create_order", 
+                    phone: currentUserPhone, 
+                    productLink: document.getElementById('orderLink').value, 
+                    quantity: qty, 
+                    // Ghi chú sẽ bao gồm cả loại mã khách chọn để anh dễ kiểm soát
+                    note: `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value,
+                    receiverName: document.getElementById('receiverName').value,
+                    receiverPhone: document.getElementById('receiverPhone').value,
+                    receiverAddress: document.getElementById('receiverAddress').value,
+                    totalAmount: totalAmount 
+                }) 
+            })
+            .then(res => res.json()).then(data => {
+                btn.textContent = 'Gửi Đơn'; btn.disabled = false;
+                if(data.success) { 
+                    showToast('🎉 Đã trừ ' + new Intl.NumberFormat('vi-VN').format(totalAmount) + 'đ. Tạo đơn thành công!'); 
+                    closeOrderModal(); 
+                    loadOrders(); 
+                    fetchBalance(); 
+                } else {
+                    showToast(data.message, 'error');
+                }
+            }).catch(err => {
+                btn.textContent = 'Gửi Đơn'; btn.disabled = false;
+                showToast('Lỗi hệ thống, vui lòng thử lại!', 'error');
+            });
+        });
+    </script>
+</body>
+</html>
