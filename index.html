@@ -56,26 +56,41 @@
 
     <div id="dashboardPage" class="hidden min-h-screen">
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
-                <div class="flex items-center gap-4">
-                    <button onclick="showRules()" class="text-gray-600 hover:text-blue-600 text-sm font-medium transition"><i class="fas fa-book-open mr-1"></i>Hướng dẫn</button>
+            <div class="max-w-7xl mx-auto px-4 sm:px-2 lg:px-8 flex justify-between h-16">
+                
+                <div class="flex items-center gap-3 md:gap-6">
+                    <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                            <i class="fas fa-box-open text-white text-sm"></i>
+                        </div>
+                        <span class="font-extrabold text-lg md:text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 tracking-tight">Trangmin.store</span>
+                    </div>
                     
-                    <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full" id="userDisplayName">...</span>
-                    <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm font-medium transition"><i class="fas fa-sign-out-alt mr-1"></i>Thoát</button>
+                    <div class="hidden sm:block w-px h-5 bg-gray-300"></div>
+
+                    <button onclick="showRules()" class="text-gray-600 hover:text-blue-600 text-sm font-bold transition flex items-center bg-gray-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                        <i class="fas fa-book-open text-blue-500 mr-2"></i> 
+                        <span>Hướng dẫn</span>
+                    </button>
                 </div>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full" id="userDisplayName">...</span>
-                    <button onclick="logout()" class="text-red-500 text-sm font-medium"><i class="fas fa-sign-out-alt mr-1"></i>Thoát</button>
+                
+                <div class="flex items-center gap-2 md:gap-4">
+                    <span class="text-xs md:text-sm font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full border border-blue-200 max-w-[90px] sm:max-w-none truncate" id="userDisplayName" title="Tên người dùng">...</span>
+                    <button onclick="logout()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 md:px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center">
+                        <i class="fas fa-sign-out-alt md:mr-1"></i>
+                        <span class="hidden md:inline">Thoát</span>
+                    </button>
                 </div>
+
             </div>
         </nav>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-6 text-white">
-                    <p class="text-blue-100 text-sm mb-1">Số dư của <span id="userNameHello">...</span></p>
+                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-purple-600 to-fuchsia-600 rounded-2xl shadow-lg p-6 text-white">
+                    <p class="text-purple-100 text-sm mb-1">Số dư của <span id="userNameHello">...</span></p>
                     <h3 class="text-4xl font-bold" id="balanceDisplay">--- đ</h3>
-                    <button onclick="openDepositModal()" class="mt-6 bg-white text-blue-700 px-5 py-2.5 rounded-lg font-bold text-sm shadow">Nạp tiền ngay</button>
+                    <button onclick="openDepositModal()" class="mt-6 bg-white text-purple-700 hover:bg-gray-50 px-5 py-2.5 rounded-lg font-bold text-sm shadow transition">Nạp tiền ngay</button>
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border p-6 text-center">
                     <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-plus"></i></div>
@@ -186,7 +201,7 @@
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-blue-600"></i></div>
-                    <span class="font-bold text-xl text-gray-900">Nội Quy & Hướng Dẫn</span>
+                    <span class="font-bold text-xl text-gray-900">Trangmin.store</span>
                 </div>
                 <button onclick="hideRules()" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition"><i class="fas fa-arrow-left mr-2"></i>Quay lại</button>
             </div>
@@ -195,10 +210,10 @@
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-6">
             
             <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-red-100 border-l-4 border-l-red-500">
-                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Hướng Dẫn</h3>
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Chú ý </h3>
                 <ul class="space-y-3 text-gray-600 text-sm md:text-base">
-                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Nạp tiền bằng QR:</strong> Hệ thống tự động nhận diện nội dung chuyển khoản. Bắt buộc phải quét mã QR hoặc copy chuẩn nội dung CK. Cố tình ghi sai mất tiền ráng chịu.</li>
-                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Không hỗ trợ hủy đơn:</strong> Đơn đã nhảy sang trạng thái "Đã đặt" sẽ không thể hoàn tác. Vui lòng kiểm tra kỹ link sản phẩm và số lượng trước khi gửi.</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Nạp tiền bằng QR:</strong> Hệ thống tự động nhận diện nội dung chuyển khoản. Bắt buộc phải quét mã QR hoặc copy chuẩn nội dung CK</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Không hỗ trợ hủy đơn:</strong> Đơn đã nhảy sang trạng thái "Đã đặt" sẽ không thể hoàn tác. Vui lòng kiểm tra kỹ trước khi gửi.</li>
                     <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Kích hoạt tài khoản:</strong> Người đăng kí mới vui lòng nhắn Support để kích hoạt tài khoản.</li>
                 </ul>
             </div>
