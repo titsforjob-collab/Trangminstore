@@ -101,14 +101,14 @@
                     <h3 class="font-bold text-gray-900">Đơn hàng gần đây</h3>
                     <button onclick="loadOrders()" class="text-blue-600 text-sm"><i class="fas fa-sync-alt mr-1"></i>Làm mới</button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase">
+                <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
+                    <table class="min-w-full relative">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th class="px-6 py-3 text-left">Mã đơn</th>
                                 <th class="px-6 py-3 text-left">Sản phẩm</th>
                                 <th class="px-6 py-3 text-center">SL</th>
-                                <th class="px-6 py-3 text-left">Trạng thái</th>
+                                <th class="px-6 py-3 text-left">MVD</th> <th class="px-6 py-3 text-left">Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody id="orderTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -344,8 +344,29 @@
                         }
 
                         // 3. Vẫn vẽ bảng danh sách đơn như cũ
+                        // 3. Xử lý màu sắc và chữ cho Badge trạng thái
+                        let badgeClass = 'bg-yellow-100 text-yellow-600'; // Mặc định màu vàng
+                        // Nếu trạng thái có chữ hoàn thành, đã đặt, thành công... thì chuyển sang màu xanh lá
+                        if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                            badgeClass = 'bg-green-100 text-green-600';
+                        }
+
+                        // 4. Xử lý hiển thị MVD (nếu chưa có thì hiện chữ "Chưa có")
+                        const mvdDisplay = o.mvd 
+    ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
+    : '<i class="text-xs text-gray-400">Chưa có</i>';
+
+                        // 5. Vẽ bảng (đã thêm whitespace-nowrap vào cột trạng thái để chống xuống dòng)
                         const tr = document.createElement('tr');
-                        tr.innerHTML = `<td class="px-6 py-4 font-bold text-gray-500">${o.orderId.slice(-6)}</td><td class="px-6 py-4 truncate max-w-[150px]"><a href="${o.link}" target="_blank" class="text-blue-600">${o.link}</a></td><td class="px-6 py-4 text-center font-bold">${o.qty}</td><td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-xs font-bold ${o.status == 'Đã đặt' ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}">${o.status}</span></td>`;
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-gray-500">${o.orderId.slice(-6)}</td>
+                            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${o.link}" target="_blank" class="text-blue-600">Link</a></td>
+                            <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
+                            <td class="px-6 py-4 text-indigo-600 font-semibold">${mvdDisplay}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${badgeClass}">${o.status}</span>
+                            </td>
+                        `;
                         table.appendChild(tr);
                     });
                 } else { 
@@ -410,6 +431,14 @@
                 showToast('Lỗi hệ thống, vui lòng thử lại!', 'error');
             });
         });
+        // HÀM SAO CHÉP MÃ VẬN ĐƠN
+        function copyMVD(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Đã copy mã: " + text, "success");
+            }).catch(() => {
+                showToast("Lỗi không thể copy, hãy bôi đen tay!", "error");
+            });
+        }
     </script>
 </body>
 </html>
