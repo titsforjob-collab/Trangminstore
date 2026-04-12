@@ -1,222 +1,531 @@
-function doPost(e) {
-  try {
-    var data = JSON.parse(e.postData.contents);
-    var action = data.action; 
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    // ==========================================
-    // AUTO-BANKING (ĐÓN WEBHOOK TỪ SMSFORWARDER)
-    // ==========================================
-    // SmsForwarder thường bọc nội dung thông báo vào trường "content" hoặc "message"
-    var rawText = data.content || data.message || data.sms_content || data.text; 
-    
-    if (rawText) {
-      rawText = String(rawText).toUpperCase();
-      
-      // 1. Dùng Regex tóm Số Tiền (Tìm dấu + và các con số/dấu phẩy/dấu chấm đi liền sau nó)
-      // Ví dụ nó sẽ tóm được: +10,000 hoặc +50.000 hoặc +100000
-      var amountMatch = rawText.match(/\+([\d,\.]+)/);
-      
-      // 2. Dùng Regex tóm 6 số cuối SĐT ngụy trang
-      // NÂNG CẤP: Chỉ tóm đúng cụm nào có CHÍNH XÁC 6 SỐ (bỏ qua các mã dài ngoằng của MoMo/Bank)
-      var phoneMatch = rawText.match(/(?:^|\D)(\d{6})(?:\D|$)/);
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Đặt Đơn Hàng</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hidden { display: none !important; }
+        .glass-effect { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 500; transform: translateX(150%); transition: transform 0.3s ease; z-index: 50; }
+        .toast.show { transform: translateX(0); }
+        .toast.success { background-color: #10B981; }
+        .toast.error { background-color: #EF4444; }
+        .status-cho-xu-ly { background-color: #FEF3C7; color: #D97706; }
+        .status-da-dat { background-color: #D1FAE5; color: #059669; }
+    </style>
+</head>
+<body>
 
-      // Nếu tìm thấy CẢ số tiền CẢ 6 số điện thoại thì mới làm tiếp
-      if (amountMatch && phoneMatch) {
-        // Dọn dẹp số tiền (cắt bỏ dấu phẩy, dấu chấm) để thành số chuẩn toán học
-        var amount = parseInt(amountMatch[1].replace(/[,.]/g, ''));
-        var phoneToCharge = phoneMatch[1];
-        
-        var sheetUsers = ss.getSheetByName("Users");
-        var dataUsers = sheetUsers.getDataRange().getValues();
-        
-        for (var i = 1; i < dataUsers.length; i++) {
-          var dbPhone = String(dataUsers[i][0]).trim();
-          
-          if (dbPhone.endsWith(phoneToCharge)) {
-            var currentBalance = parseInt(dataUsers[i][4]) || 0; 
-            var newBalance = currentBalance + amount;
+    <div id="authPage" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-effect p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"><i class="fas fa-box-open text-white text-2xl"></i></div>
+                <h2 class="text-2xl font-bold text-gray-900" id="authTitle">Đăng Nhập</h2>
+            </div>
+
+            <form id="authForm" class="space-y-4">
+                <div id="usernameField" class="hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tên Zalo (Để kích hoạt tài khoản)</label>
+                    <input type="text" id="regUsername" class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Ví dụ: Thị Nở xink">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
+                    <input type="tel" id="authPhone" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Dùng để đăng nhập">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Mật khẩu</label>
+                    <input type="password" id="authPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
+                </div>
+
+                <button type="submit" id="authBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">Vào hệ thống</button>
+            </form>
+
+            <div class="mt-6 text-center text-sm">
+                <span class="text-gray-600" id="authSwitchText">Chưa có tài khoản?</span>
+                <button onclick="toggleAuthMode()" class="text-blue-600 font-semibold hover:underline ml-1" id="authSwitchBtn">Đăng ký ngay</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardPage" class="hidden min-h-screen">
+        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-2 lg:px-8 flex justify-between h-16">
+                
+                <div class="flex items-center gap-3 md:gap-6">
+                    <div class="flex items-center gap-2 cursor-pointer" onclick="location.reload()">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
+                            <i class="fas fa-box-open text-white text-sm"></i>
+                        </div>
+                        <span class="font-extrabold text-lg md:text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 tracking-tight">Trangmin.store</span>
+                    </div>
+                    
+                    <div class="hidden sm:block w-px h-5 bg-gray-300"></div>
+
+                    <button onclick="showRules()" class="text-gray-600 hover:text-blue-600 text-sm font-bold transition flex items-center bg-gray-50 hover:bg-blue-50 px-3 py-1.5 rounded-lg border border-gray-100 shadow-sm">
+                        <i class="fas fa-book-open text-blue-500 mr-2"></i> 
+                        <span>Hướng dẫn</span>
+                    </button>
+                </div>
+                
+                <div class="flex items-center gap-2 md:gap-4">
+                    <span class="text-xs md:text-sm font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full border border-blue-200 max-w-[90px] sm:max-w-none truncate" id="userDisplayName" title="Tên người dùng">...</span>
+                    <button onclick="logout()" class="text-red-500 hover:text-red-700 hover:bg-red-50 px-2 md:px-3 py-1.5 rounded-lg text-sm font-bold transition flex items-center">
+                        <i class="fas fa-sign-out-alt md:mr-1"></i>
+                        <span class="hidden md:inline">Thoát</span>
+                    </button>
+                </div>
+
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="col-span-1 md:col-span-2 bg-gradient-to-br from-purple-600 to-fuchsia-600 rounded-2xl shadow-lg p-6 text-white">
+                    <p class="text-purple-100 text-sm mb-1">Số dư của <span id="userNameHello">...</span></p>
+                    <h3 class="text-4xl font-bold" id="balanceDisplay">--- đ</h3>
+                    <button onclick="openDepositModal()" class="mt-6 bg-white text-purple-700 hover:bg-gray-50 px-5 py-2.5 rounded-lg font-bold text-sm shadow transition">Nạp tiền ngay</button>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border p-6 text-center">
+                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-plus"></i></div>
+                    <button onclick="openOrderModal()" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium">Tạo đơn mới</button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6 mb-8">
+                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-clock text-yellow-500 mr-2"></i>Đang xử lý</p>
+                        <h4 class="text-2xl font-bold text-gray-900" id="countPending">0</h4>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành</p>
+                        <h4 class="text-2xl font-bold text-gray-900" id="countCompleted">0</h4>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
+                <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-gray-900">Đơn hàng gần đây</h3>
+                    <button onclick="loadOrders()" class="text-blue-600 text-sm"><i class="fas fa-sync-alt mr-1"></i>Làm mới</button>
+                </div>
+                <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
+                    <table class="min-w-full relative">
+                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="px-6 py-3 text-left">Mã đơn</th>
+                                <th class="px-6 py-3 text-left">Sản phẩm</th>
+                                <th class="px-6 py-3 text-center">SL</th>
+                                <th class="px-6 py-3 text-left">MVD</th> <th class="px-6 py-3 text-left">Trạng thái</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="depositModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+            <h3 class="font-bold text-lg mb-2">Quét mã QR để nạp tiền</h3>
+            <p class="text-sm text-gray-500 mb-4">Quét mã bằng App Ngân hàng hoặc Momo</p>
+
+            <img id="qrCodeImg" src="" alt="Mã QR Nạp Tiền" class="w-48 h-48 mx-auto border p-2 rounded-lg mb-4">
+
+            <div class="bg-gray-50 p-3 rounded-lg text-left text-sm mb-4">
+                <p class="flex items-center justify-center gap-2">Nội dung CK: 
+                    <strong id="transferContent" class="text-red-600 font-bold text-lg"></strong>
+                    <button onclick="copyTransferContent()" class="text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded text-xs"><i class="fas fa-copy"></i> Copy</button>
+                </p>
+                <p class="text-xs text-gray-500 mt-1 italic text-center">*Nội dung CK bắt buộc phải nhập đúng như trên để hệ thống tự động cộng tiền.</p>
+            </div>
+
+            <button onclick="closeDepositModal()" class="w-full bg-gray-200 text-gray-700 hover:bg-gray-300 px-6 py-2 rounded-lg font-bold transition">Đóng</button>
+        </div>
+    </div>
+
+    <div id="orderModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="font-bold text-lg mb-4">Gửi Yêu Cầu Đặt Đơn</h3>
+            <form id="orderForm" class="space-y-4">
+                <input type="url" id="orderLink" required class="w-full px-4 py-2 rounded-lg border" placeholder="Link sản phẩm Shopee">
+                <div class="grid grid-cols-2 gap-4">
+                    <input type="number" id="orderQty" required min="1" value="1" class="w-full px-4 py-2 rounded-lg border" placeholder="Số lượng">
+                    <input type="text" id="orderNote" class="w-full px-4 py-2 rounded-lg border" placeholder="Ghi chú (Màu/Size)">
+                </div>
+                <div class="space-y-3 pt-4 border-t">
+                    <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
+                    <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
+                    <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
+                    <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
+                    <textarea id="extraNote" class="w-full px-4 py-2 mt-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="Ghi chú (Không bắt buộc)" rows="2"></textarea>
+                </div>
+                <div class="space-y-2 pt-4 border-t">
+    <h4 class="font-bold text-sm text-gray-800">Chọn loại mã áp dụng</h4>
+    <div class="grid grid-cols-2 gap-3">
+        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-blue-500 bg-blue-50">
+            <input type="radio" name="couponType" value="80" checked class="mr-2">
+            <div class="text-xs">
+                <p class="font-bold text-blue-600">Mã 80K</p>
+                <p class="text-gray-500">Phí: 31.000đ</p>
+            </div>
+        </label>
+        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
+            <input type="radio" name="couponType" value="100" class="mr-2">
+            <div class="text-xs">
+                <p class="font-bold text-blue-600">Mã 100K (hiện đang hết)</p>
+                <p class="text-gray-500">Phí: 41.000đ</p>
+            </div>
+        </label>
+    </div>
+</div>
+                <div class="flex justify-end gap-3 mt-4">
+                    <button type="button" onclick="closeOrderModal()" class="text-gray-500">Hủy</button>
+                    <button type="submit" id="submitOrderBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Gửi Đơn</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="rulesPage" class="hidden min-h-screen pb-12">
+        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-blue-600"></i></div>
+                    <span class="font-bold text-xl text-gray-900">Trangmin.store</span>
+                </div>
+                <button onclick="hideRules()" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition"><i class="fas fa-arrow-left mr-2"></i>Quay lại</button>
+            </div>
+        </nav>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-6">
             
-            sheetUsers.getRange(i + 1, 5).setValue(newBalance); // Cộng tiền
-            // --- GHI LỊCH SỬ GIAO DỊCH (NẠP TIỀN) ---
-            var sheetTrans = ss.getSheetByName("Transactions");
-            if (sheetTrans) { // Kiểm tra xem có tab Transactions không
-              var transId = "GD" + new Date().getTime();
-              var timeNow = new Date().toLocaleString("vi-VN");
-              var noteTrans = "Nạp tự động từ MB Bank";
-              // Cột: Trans_ID, User_ID (SĐT), Type, Amount, Note, Created_At
-              sheetTrans.appendRow([transId, dbPhone, "Nạp tiền", amount, noteTrans, timeNow]);
-            }
-            // ----------------------------------------
-            return ContentService.createTextOutput(JSON.stringify({
-              "success": true, "message": "Nạp tiền SmsForwarder thành công"
-            })).setMimeType(ContentService.MimeType.JSON);
-          }
-        }
-      }
-      return ContentService.createTextOutput("OK").setMimeType(ContentService.MimeType.JSON);
-    }
-    var sheetUsers = ss.getSheetByName("Users");
-    
-    // ==========================================
-    // 1. ĐĂNG KÝ TÀI KHOẢN (THÊM USERNAME)
-    // ==========================================
-    if (action === "register") {
-      var phone = data.phone;
-      var username = data.username; // Nhận username từ Web
-      var password = data.password;
-      var createdAt = new Date().toLocaleString("vi-VN");
-      
-      var dataUsers = sheetUsers.getDataRange().getValues();
-      for (var i = 1; i < dataUsers.length; i++) {
-        // Kiểm tra trùng SĐT
-        if (dataUsers[i][0] == phone) {
-          return ContentService.createTextOutput(JSON.stringify({
-            "success": false, "message": "Số điện thoại này đã được đăng ký!"
-          })).setMimeType(ContentService.MimeType.JSON);
-        }
-        // Kiểm tra trùng Tên đăng nhập
-        if (dataUsers[i][1] == username) {
-          return ContentService.createTextOutput(JSON.stringify({
-            "success": false, "message": "Tên đăng nhập này đã có người sử dụng!"
-          })).setMimeType(ContentService.MimeType.JSON);
-        }
-      }
-      
-      // Ghi theo thứ tự: SĐT, Username, Pass, Status, Balance, Time
-      sheetUsers.appendRow([phone, username, password, "Chưa kích hoạt", 0, createdAt]);
-      
-      return ContentService.createTextOutput(JSON.stringify({
-        "success": true, 
-        "message": "Đăng ký thành công! Hãy nhắn Zalo Admin để kích hoạt tài khoản."
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // ==========================================
-    // 2. ĐĂNG NHẬP (TRẢ VỀ CẢ USERNAME)
-    // ==========================================
-    else if (action === "login") {
-      var phone = data.phone;
-      var password = data.password;
-      var dataUsers = sheetUsers.getDataRange().getValues();
-      
-      for (var i = 1; i < dataUsers.length; i++) {
-        if (dataUsers[i][0] == phone) { 
-          if (dataUsers[i][2] == password) { // Mật khẩu giờ ở cột C (index 2)
-            if (dataUsers[i][3] === "Đã kích hoạt") {
-              return ContentService.createTextOutput(JSON.stringify({
-                "success": true, 
-                "username": dataUsers[i][1], // Trả về Tên đăng nhập để hiện lên Web
-                "balance": dataUsers[i][4],  // Số dư ở cột E (index 4)
-                "message": "Đăng nhập thành công!"
-              })).setMimeType(ContentService.MimeType.JSON);
-            } else {
-              return ContentService.createTextOutput(JSON.stringify({
-                "success": false, "message": "Tài khoản đang chờ Admin duyệt!"
-              })).setMimeType(ContentService.MimeType.JSON);
-            }
-          } else {
-            return ContentService.createTextOutput(JSON.stringify({
-              "success": false, "message": "Sai mật khẩu!"
-            })).setMimeType(ContentService.MimeType.JSON);
-          }
-        }
-      }
-      return ContentService.createTextOutput(JSON.stringify({
-        "success": false, "message": "Tài khoản không tồn tại!"
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
-    // ==========================================
-    // 3. TẠO ĐƠN HÀNG (TRỪ TIỀN & GHI LOG)
-    // ==========================================
-    else if (action === "create_order") {
-      var note = data.note;
-      var extraNote = data.extraNote;  
-      var receiverName = data.receiverName;
-      var phone = data.phone; 
-      var totalAmount = parseInt(data.totalAmount) || 0; // Số tiền cần trừ (Web phải gửi lên)
-      
-      var sheetUsers = ss.getSheetByName("Users");
-      var dataUsers = sheetUsers.getDataRange().getValues();
-      var userRow = -1;
-      var currentBalance = 0;
-      
-      // 1. Kiểm tra số dư của khách
-      for (var i = 1; i < dataUsers.length; i++) {
-        if (dataUsers[i][0] == phone) {
-          userRow = i + 1;
-          currentBalance = parseInt(dataUsers[i][4]) || 0; // Số dư ở cột E
-          break;
-        }
-      }
-      
-      if (userRow === -1) {
-        return ContentService.createTextOutput(JSON.stringify({"success": false, "message": "Không tìm thấy tài khoản!"})).setMimeType(ContentService.MimeType.JSON);
-      }
-      
-      if (currentBalance < totalAmount) {
-        return ContentService.createTextOutput(JSON.stringify({"success": false, "message": "Số dư không đủ. Vui lòng nạp thêm tiền!"})).setMimeType(ContentService.MimeType.JSON);
-      }
-      
-      // 2. Trừ tiền tài khoản
-      var newBalance = currentBalance - totalAmount;
-      sheetUsers.getRange(userRow, 5).setValue(newBalance);
-      
-      var createdAt = new Date().toLocaleString("vi-VN");
-      var orderId = "DH" + new Date().getTime(); 
-      
-      // 3. Ghi vào bảng Đơn hàng (Orders)
-      var sheetOrders = ss.getSheetByName("Orders");
-      var productLink = data.productLink;
-      var quantity = data.quantity;
-      var note = data.note;
-      var receiverName = data.receiverName;
-      var receiverPhone = data.receiverPhone;
-      var receiverAddress = data.receiverAddress;
-      var status = "Chờ xử lý"; 
-      
-      sheetOrders.appendRow([orderId, phone, productLink, quantity, note, extraNote, receiverName, receiverPhone, receiverAddress, status, createdAt]);
-      
-      // 4. GHI LỊCH SỬ GIAO DỊCH (TRỪ TIỀN MUA HÀNG)
-      var sheetTrans = ss.getSheetByName("Transactions");
-      if (sheetTrans && totalAmount > 0) {
-        var transId = "GD" + new Date().getTime();
-        var noteTrans = "Thanh toán mã đơn: " + orderId;
-        sheetTrans.appendRow([transId, phone, "Trừ tiền mua hàng", -totalAmount, noteTrans, createdAt]); // Số tiền âm
-      }
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-red-100 border-l-4 border-l-red-500">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Chú ý </h3>
+                <ul class="space-y-3 text-gray-600 text-sm md:text-base">
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Nạp tiền bằng QR:</strong> Hệ thống tự động nhận diện nội dung chuyển khoản. Bắt buộc phải quét mã QR hoặc copy chuẩn nội dung CK</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Không hỗ trợ hủy đơn:</strong> Đơn đã nhảy sang trạng thái "Đã đặt" sẽ không thể hoàn tác. Vui lòng kiểm tra kỹ trước khi gửi.</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Kích hoạt tài khoản:</strong> Người đăng kí mới vui lòng nhắn Support để kích hoạt tài khoản.</li>
+                </ul>
+            </div>
 
-      return ContentService.createTextOutput(JSON.stringify({
-        "success": true, 
-        "message": "Đã tạo đơn thành công!",
-        "newBalance": newBalance // Trả về số dư mới để Web tự update ngay
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
-    else if (action === "get_orders") {
-      var sheetOrders = ss.getSheetByName("Orders");
-      var dO = sheetOrders.getDataRange().getValues();
-      var list = [];
-      for (var i = 1; i < dO.length; i++) {
-        if (dO[i][1] == data.phone) {
-          // Cột I là status (index 8), Cột J là date (index 9)
-          list.push({ orderId: dO[i][0], link: dO[i][2], qty: dO[i][3], note: dO[i][4], status: dO[i][8], date: dO[i][9], mvd: dO[i][10] });
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-blue-100">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-magic text-blue-500 mr-2"></i> Hướng Dẫn Sử Dụng</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">1. Cách nạp tiền tự động</h4>
+                        <p class="text-gray-600 text-sm">Bấm vào nút <strong>"Nạp tiền ngay"</strong> ở bảng điều khiển. Mở app ngân hàng quét mã QR. Sau khi ngân hàng báo chuyển khoản thành công, đợi khoảng 3-5 giây và bấm nút "Làm mới" hoặc tải lại trang, tiền sẽ tự động cộng vào số dư của bạn.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">2. Cách tạo đơn hàng</h4>
+                        <p class="text-gray-600 text-sm">Bấm <strong>"Tạo đơn mới"</strong> -> Dán link sản phẩm (Shopee/Tiktok...) -> Nhập số lượng và địa chỉ người nhận. Hệ thống sẽ tính toán tổng tiền dựa trên loại mã giảm giá bạn chọn. Nếu số dư đủ, đơn sẽ được tạo thành công và trừ tiền ngay lập tức.</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">3. Theo dõi mã vận đơn (MVD)</h4>
+                        <p class="text-gray-600 text-sm">Khi đơn hàng được xử lý xong, Admin sẽ cập nhật Mã Vận Đơn (MVD) màu tím trên hệ thống. Bạn có thể <strong>chạm trực tiếp vào MVD đó để sao chép</strong> và mang lên app Giao Hàng để tra cứu hành trình.</p>
+                    </div>
+                  
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">Online : 8h -21h hàng ngày</h4>
+                        <p class="text-gray-600 text-sm">Ngoài thời gian trên có thể tương tác của bạn trên hệ thống sẽ hơi chậm một chút , đó là điều bình thường đừng lo nha:"))</p>
+                    </div> 
+
+                </div>
+            </div>
+
+            <div class="text-center pt-6">
+                <p class="text-gray-500 text-sm mb-3">Cần hỗ trợ thêm? Đừng ngại liên hệ Support</p>
+                <a href="https://zalo.me/0385838650" target="_blank" class="inline-flex items-center justify-center px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition shadow-md">
+                    <i class="fas fa-headset mr-2"></i> Nhắn tin cho Support
+                </a>
+            </div>
+
+        </div>
+    </div>
+    <div id="toast" class="toast"></div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbxXFjzKLhHv5OTMMyGtSiIG9QLnnjvTEItOCZf6leDBiK0r9ZazGZ_QkCma9GwO7nCezQ/exec"; // QUAN TRỌNG: Dán link API của anh vào đây!
+
+        let isLoginMode = true;
+        let currentUserPhone = localStorage.getItem('userPhone') || null;
+        let currentUserName = localStorage.getItem('userName') || "...";
+
+        window.onload = () => {
+            if (currentUserPhone) {
+                showDashboard();
+                loadOrders();
+                fetchBalance();
+            } else {
+                showAuth();
+            }
+        };
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast show ${type}`;
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
         }
-      }
-      return ContentService.createTextOutput(JSON.stringify({"success": true, "orders": list.reverse()})).setMimeType(ContentService.MimeType.JSON);
-    }
-    // HÀM LẤY SỐ DƯ MỚI NHẤT
-    else if (action === "get_balance") {
-      var sheetUsers = ss.getSheetByName("Users");
-      var dataUsers = sheetUsers.getDataRange().getValues();
-      for (var i = 1; i < dataUsers.length; i++) {
-        if (dataUsers[i][0] == data.phone) {
-          return ContentService.createTextOutput(JSON.stringify({
-            "success": true, 
-            "balance": dataUsers[i][4] // Số dư đang nằm ở cột E (index 4)
-          })).setMimeType(ContentService.MimeType.JSON);
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('authTitle').textContent = isLoginMode ? 'Đăng Nhập' : 'Đăng Ký';
+            document.getElementById('authBtn').textContent = isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản';
+            document.getElementById('usernameField').classList.toggle('hidden');
+            document.getElementById('authSwitchBtn').textContent = isLoginMode ? 'Đăng ký ngay' : 'Đăng nhập';
         }
-      }
-    }
-  } catch(error) {
-    return ContentService.createTextOutput(JSON.stringify({"success": false, "error": error.message})).setMimeType(ContentService.MimeType.JSON);
-  }
-}
+
+        function showAuth() { document.getElementById('authPage').classList.remove('hidden'); document.getElementById('dashboardPage').classList.add('hidden'); }
+        
+        function showDashboard() {
+            document.getElementById('authPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+            document.getElementById('userDisplayName').textContent = currentUserName;
+            document.getElementById('userNameHello').textContent = currentUserName;
+            document.getElementById('balanceDisplay').textContent = localStorage.getItem('userBalance') || "0 đ";
+        }
+        
+        function fetchBalance() {
+            document.getElementById('balanceDisplay').textContent = "Đang tải...";
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ action: "get_balance", phone: currentUserPhone }) 
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    const tienMoi = new Intl.NumberFormat('vi-VN').format(data.balance) + " đ";
+                    document.getElementById('balanceDisplay').textContent = tienMoi;
+                    localStorage.setItem('userBalance', tienMoi); // Lưu đè vào bộ nhớ tạm
+                }
+            });
+        }    
+
+        function logout() { localStorage.clear(); location.reload(); }
+
+        // Bật/Tắt trang Hướng dẫn
+        function showRules() {
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('rulesPage').classList.remove('hidden');
+            window.scrollTo(0, 0); // Tự động cuộn lên đầu trang
+        }
+
+        function hideRules() {
+            document.getElementById('rulesPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+        }
+
+        function openOrderModal() { document.getElementById('orderModal').classList.remove('hidden'); }
+        function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); document.getElementById('orderForm').reset(); }
+        document.querySelectorAll('input[name="couponType"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        document.querySelectorAll('input[name="couponType"]').forEach(r => {
+            r.closest('label').classList.remove('border-purple-500', 'bg-blue-50');
+            r.closest('label').classList.add('border-gray-200');
+        });
+        if (this.checked) {
+            this.closest('label').classList.remove('border-gray-200');
+            this.closest('label').classList.add('border-purple-500', 'bg-blue-50');
+        }
+    });
+});
+        function openDepositModal() {
+            // 1. Tạo "áo khoác" ngụy trang cho giao dịch
+            const nguoiTrang = ["tientk ", "thanhtoan ", "happy ", "autnap "];
+            const randomText = nguoiTrang[Math.floor(Math.random() * nguoiTrang.length)];
+            
+            // Nội dung sẽ là: "Tra tien do 0987654321"
+            const noidung = randomText + currentUserPhone.slice(-6); 
+            document.getElementById('transferContent').textContent = noidung;
+
+            const bankId = "MBBank"; // Mã ngân hàng của anh
+            const accountNo = "9669696969666"; // STK của anh
+            const accountName = "NGUYEN TUAN PHONG"; // Tên của anh
+
+            // Phải bọc encodeURIComponent để link QR không bị lỗi khoảng trắng
+            const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.png?amount=0&addInfo=${encodeURIComponent(noidung)}&accountName=${encodeURIComponent(accountName)}`;
+            document.getElementById('qrCodeImg').src = qrUrl;
+
+            document.getElementById('depositModal').classList.remove('hidden');
+        }
+
+        // Hàm Copy
+        function copyTransferContent() {
+            const text = document.getElementById('transferContent').textContent;
+            navigator.clipboard.writeText(text);
+            showToast("Đã copy nội dung CK!", "success");
+        }
+
+        function closeDepositModal() {
+            document.getElementById('depositModal').classList.add('hidden');
+        }
+
+        // XỬ LÝ ĐĂNG NHẬP / ĐĂNG KÝ
+        document.getElementById('authForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const phone = document.getElementById('authPhone').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const btn = document.getElementById('authBtn');
+            btn.textContent = 'Đang xử lý...'; btn.disabled = true;
+
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: isLoginMode ? "login" : "register",
+                    phone: phone,
+                    password: password,
+                    username: username
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản'; btn.disabled = false;
+                if (data.success) {
+                    if (isLoginMode) {
+                        localStorage.setItem('userPhone', phone);
+                        localStorage.setItem('userName', data.username);
+                        localStorage.setItem('userBalance', new Intl.NumberFormat('vi-VN').format(data.balance) + " đ");
+                        location.reload();
+                    } else {
+                        showToast(data.message, 'success');
+                        setTimeout(toggleAuthMode, 2000);
+                    }
+                } else { showToast(data.message, 'error'); }
+            });
+        });
+
+        // TẠO ĐƠN & LOAD ĐƠN (Giữ nguyên logic cũ nhưng đổi màu trạng thái)
+        function loadOrders() {
+            const table = document.getElementById('orderTableBody');
+            table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Đang tải đơn...</td></tr>';
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "get_orders", phone: currentUserPhone }) })
+            .then(res => res.json())
+            .then(data => {
+                table.innerHTML = '';
+                // 1. Khai báo 2 biến để đếm số lượng
+                let countPending = 0;
+                let countCompleted = 0;
+
+                if(data.orders && data.orders.length > 0) {
+                    data.orders.forEach(o => {
+                        // 2. Phân loại trạng thái để đếm
+                        const statusLower = o.status.toLowerCase();
+                        if (statusLower.includes('chờ') || statusLower.includes('đang')) {
+                            countPending++; // Nếu trạng thái có chữ "chờ" hoặc "đang" thì +1 vào Đang xử lý
+                        } else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                            countCompleted++; // Nếu có chữ "hoàn thành" hoặc "thành công" thì +1 vào Hoàn thành
+                        }
+
+                        // 3. Vẫn vẽ bảng danh sách đơn như cũ
+                        // 3. Xử lý màu sắc và chữ cho Badge trạng thái
+                        let badgeClass = 'bg-yellow-100 text-yellow-600'; // Mặc định màu vàng
+                        // Nếu trạng thái có chữ hoàn thành, đã đặt, thành công... thì chuyển sang màu xanh lá
+                        if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                            badgeClass = 'bg-green-100 text-green-600';
+                        }
+
+                        // 4. Xử lý hiển thị MVD (nếu chưa có thì hiện chữ "Chưa có")
+                        const mvdDisplay = o.mvd 
+    ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
+    : '<i class="text-xs text-gray-400">Chưa có</i>';
+
+                        // 5. Vẽ bảng (đã thêm whitespace-nowrap vào cột trạng thái để chống xuống dòng)
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="px-6 py-4 font-bold text-gray-500">${o.orderId.slice(-6)}</td>
+                            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${o.link}" target="_blank" class="text-blue-600">Link</a></td>
+                            <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
+                            <td class="px-6 py-4 text-indigo-600 font-semibold">${mvdDisplay}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${badgeClass}">${o.status}</span>
+                            </td>
+                        `;
+                        table.appendChild(tr);
+                    });
+                } else { 
+                    table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Chưa có đơn nào</td></tr>'; 
+                }
+                
+                // 4. Bắn con số vừa đếm được lên giao diện
+                document.getElementById('countPending').textContent = countPending;
+                document.getElementById('countCompleted').textContent = countCompleted;
+            });
+        }
+
+        // TẠO ĐƠN (Nâng cấp chọn mã 80k/100k)
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitOrderBtn');
+            btn.textContent = 'Đang xử lý...'; btn.disabled = true;
+            
+            // --- LOGIC TÍNH TIỀN THEO MÃ ---
+            const qty = parseInt(document.getElementById('orderQty').value) || 1;
+            const couponValue = document.querySelector('input[name="couponType"]:checked').value;
+            
+            let pricePerItem = 0;
+            if (couponValue === "80") {
+                pricePerItem = 31000; // Mã 80k thì lấy phí 31k
+            } else if (couponValue === "100") {
+                pricePerItem = 41000; // Mã 100k thì lấy phí 41k
+            }
+            
+            const totalAmount = qty * pricePerItem;
+            // ------------------------------
+
+            fetch(API_URL, { 
+                method: 'POST', 
+                body: JSON.stringify({ 
+                    action: "create_order", 
+                    phone: currentUserPhone, 
+                    productLink: document.getElementById('orderLink').value, 
+                    quantity: qty, 
+                    // Ghi chú sẽ bao gồm cả loại mã khách chọn để anh dễ kiểm soát
+                    note: `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value,
+                    extraNote: document.getElementById('extraNote').value,
+                    
+                    receiverName: document.getElementById('receiverName').value,
+                    receiverPhone: document.getElementById('receiverPhone').value,
+                    receiverAddress: document.getElementById('receiverAddress').value,
+                    totalAmount: totalAmount 
+                }) 
+            })
+            .then(res => res.json()).then(data => {
+                btn.textContent = 'Gửi Đơn'; btn.disabled = false;
+                if(data.success) { 
+                    showToast('🎉 Đã trừ ' + new Intl.NumberFormat('vi-VN').format(totalAmount) + 'đ. Tạo đơn thành công!'); 
+                    closeOrderModal(); 
+                    loadOrders(); 
+                    fetchBalance(); 
+                } else {
+                    showToast(data.message, 'error');
+                }
+            }).catch(err => {
+                btn.textContent = 'Gửi Đơn'; btn.disabled = false;
+                showToast('Lỗi hệ thống, vui lòng thử lại!', 'error');
+            });
+        });
+        // HÀM SAO CHÉP MÃ VẬN ĐƠN
+        function copyMVD(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast("Đã copy mã: " + text, "success");
+            }).catch(() => {
+                showToast("Lỗi không thể copy, hãy bôi đen tay!", "error");
+            });
+        }
+    </script>
+</body>
+</html>
