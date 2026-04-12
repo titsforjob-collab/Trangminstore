@@ -57,9 +57,11 @@
     <div id="dashboardPage" class="hidden min-h-screen">
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow"><i class="fas fa-cube text-white"></i></div>
-                    <span class="font-bold text-xl text-gray-900">Trangmin.store</span>
+                <div class="flex items-center gap-4">
+                    <button onclick="showRules()" class="text-gray-600 hover:text-blue-600 text-sm font-medium transition"><i class="fas fa-book-open mr-1"></i>Hướng dẫn</button>
+                    
+                    <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full" id="userDisplayName">...</span>
+                    <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm font-medium transition"><i class="fas fa-sign-out-alt mr-1"></i>Thoát</button>
                 </div>
                 <div class="flex items-center gap-4">
                     <span class="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1.5 rounded-full" id="userDisplayName">...</span>
@@ -179,6 +181,64 @@
             </form>
         </div>
     </div>
+    <div id="rulesPage" class="hidden min-h-screen pb-12">
+        <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center"><i class="fas fa-book text-blue-600"></i></div>
+                    <span class="font-bold text-xl text-gray-900">Nội Quy & Hướng Dẫn</span>
+                </div>
+                <button onclick="hideRules()" class="bg-gray-900 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-800 transition"><i class="fas fa-arrow-left mr-2"></i>Quay lại</button>
+            </div>
+        </nav>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-6">
+            
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-red-100 border-l-4 border-l-red-500">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-exclamation-triangle text-red-500 mr-2"></i> Hướng Dẫn</h3>
+                <ul class="space-y-3 text-gray-600 text-sm md:text-base">
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Nạp tiền bằng QR:</strong> Hệ thống tự động nhận diện nội dung chuyển khoản. Bắt buộc phải quét mã QR hoặc copy chuẩn nội dung CK. Cố tình ghi sai mất tiền ráng chịu.</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Không hỗ trợ hủy đơn:</strong> Đơn đã nhảy sang trạng thái "Đã đặt" sẽ không thể hoàn tác. Vui lòng kiểm tra kỹ link sản phẩm và số lượng trước khi gửi.</li>
+                    <li class="flex items-start"><i class="fas fa-check text-green-500 mt-1 mr-3"></i> <strong>Kích hoạt tài khoản:</strong> Người đăng kí mới vui lòng nhắn Support để kích hoạt tài khoản.</li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-blue-100">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center"><i class="fas fa-magic text-blue-500 mr-2"></i> Hướng Dẫn Sử Dụng</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">1. Cách nạp tiền tự động</h4>
+                        <p class="text-gray-600 text-sm">Bấm vào nút <strong>"Nạp tiền ngay"</strong> ở bảng điều khiển. Mở app ngân hàng quét mã QR. Sau khi ngân hàng báo chuyển khoản thành công, đợi khoảng 3-5 giây và bấm nút "Làm mới" hoặc tải lại trang, tiền sẽ tự động cộng vào số dư của bạn.</p>
+                    </div>
+                    
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">2. Cách tạo đơn hàng</h4>
+                        <p class="text-gray-600 text-sm">Bấm <strong>"Tạo đơn mới"</strong> -> Dán link sản phẩm (Shopee/Tiktok...) -> Nhập số lượng và địa chỉ người nhận. Hệ thống sẽ tính toán tổng tiền dựa trên loại mã giảm giá bạn chọn. Nếu số dư đủ, đơn sẽ được tạo thành công và trừ tiền ngay lập tức.</p>
+                    </div>
+
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">3. Theo dõi mã vận đơn (MVD)</h4>
+                        <p class="text-gray-600 text-sm">Khi đơn hàng được xử lý xong, Admin sẽ cập nhật Mã Vận Đơn (MVD) màu tím trên hệ thống. Bạn có thể <strong>chạm trực tiếp vào MVD đó để sao chép</strong> và mang lên app Giao Hàng để tra cứu hành trình.</p>
+                    </div>
+                  
+                    <div>
+                        <h4 class="font-bold text-gray-800 mb-2">Online : 8h -21h hàng ngày</h4>
+                        <p class="text-gray-600 text-sm">Ngoài thời gian trên có thể tương tác của bạn trên hệ thống sẽ hơi chậm một chút , đó là điều bình thường đừng lo nha:"))</p>
+                    </div> 
+
+                </div>
+            </div>
+
+            <div class="text-center pt-6">
+                <p class="text-gray-500 text-sm mb-3">Cần hỗ trợ thêm? Đừng ngại liên hệ Support</p>
+                <a href="https://zalo.me/0385838650" target="_blank" class="inline-flex items-center justify-center px-6 py-3 bg-blue-500 text-white font-semibold rounded-full hover:bg-blue-600 transition shadow-md">
+                    <i class="fas fa-headset mr-2"></i> Nhắn tin cho Support
+                </a>
+            </div>
+
+        </div>
+    </div>
     <div id="toast" class="toast"></div>
 
     <script>
@@ -240,6 +300,18 @@
         }    
 
         function logout() { localStorage.clear(); location.reload(); }
+
+        // Bật/Tắt trang Hướng dẫn
+        function showRules() {
+            document.getElementById('dashboardPage').classList.add('hidden');
+            document.getElementById('rulesPage').classList.remove('hidden');
+            window.scrollTo(0, 0); // Tự động cuộn lên đầu trang
+        }
+
+        function hideRules() {
+            document.getElementById('rulesPage').classList.add('hidden');
+            document.getElementById('dashboardPage').classList.remove('hidden');
+        }
 
         function openOrderModal() { document.getElementById('orderModal').classList.remove('hidden'); }
         function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); document.getElementById('orderForm').reset(); }
