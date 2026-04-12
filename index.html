@@ -151,6 +151,7 @@
                     <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
                     <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
                     <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
+                    <textarea id="extraNote" class="w-full px-4 py-2 mt-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="Ghi chú khác của khách (Không bắt buộc)" rows="2"></textarea>
                 </div>
                 <div class="space-y-2 pt-4 border-t">
     <h4 class="font-bold text-sm text-gray-800">Chọn loại mã áp dụng</h4>
@@ -386,6 +387,8 @@
                     quantity: qty, 
                     // Ghi chú sẽ bao gồm cả loại mã khách chọn để anh dễ kiểm soát
                     note: `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value,
+                    extraNote: document.getElementById('extraNote').value,
+                    
                     receiverName: document.getElementById('receiverName').value,
                     receiverPhone: document.getElementById('receiverPhone').value,
                     receiverAddress: document.getElementById('receiverAddress').value,
