@@ -234,59 +234,80 @@
     </div>
 
     <div id="orderModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
-            <h3 class="font-bold text-lg mb-4">Gửi Yêu Cầu Đặt Đơn</h3>
-            <form id="orderForm" class="space-y-4">
-                <input type="url" id="orderLink" required class="w-full px-4 py-2 rounded-lg border" placeholder="Link sản phẩm Shopee">
-                <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="orderQty" required min="1" value="1" class="w-full px-4 py-2 rounded-lg border" placeholder="Số lượng">
-                    <input type="text" id="orderNote" class="w-full px-4 py-2 rounded-lg border" placeholder="Ghi chú (Màu/Size)">
-                </div>
-                <div class="space-y-3 pt-4 border-t">
-                    <div class="flex justify-between items-center mb-2">
-                        <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
-                        <button type="button" onclick="toggleFastFill()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition shadow-sm">
-                            <i class="fas fa-bolt mr-1"></i>Điền nhanh
-                        </button>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[90vh] flex flex-col">
+            <h3 class="font-bold text-lg mb-4 flex-shrink-0">Gửi Yêu Cầu Đặt Đơn</h3>
+            
+            <div class="overflow-y-auto flex-1 pr-2">
+                <form id="orderForm" class="space-y-4">
+                    
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <input type="url" id="orderLink" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Link sản phẩm 1 (Bắt buộc)" onfocus="showClassify(1)">
+                        <input type="text" id="orderClassify" class="hidden w-full px-4 py-2 mt-2 border border-indigo-200 bg-white rounded-lg text-sm outline-none focus:border-indigo-500" placeholder="Nhập phân loại 1 (Màu sắc, Kích cỡ...)">
+                    </div>
+                    
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <input type="url" id="orderLink2" class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Link sản phẩm 2 (Không bắt buộc)" onfocus="showClassify(2)">
+                        <input type="text" id="orderClassify2" class="hidden w-full px-4 py-2 mt-2 border border-indigo-200 bg-white rounded-lg text-sm outline-none focus:border-indigo-500" placeholder="Nhập phân loại 2 (Màu sắc, Kích cỡ...)">
                     </div>
 
-                    <div id="fastFillArea" class="hidden mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
-                        <textarea id="fastFillInput" class="w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Lười nhập thì dán cả cụm thông tin vào đây (Ví dụ: Thị nở xink 0123456789 thôn cành lá xã cành cây huyện gió mây tỉnh đổi núi...)" rows="3"></textarea>
-                        <button type="button" onclick="handleFastFill()" class="mt-2 w-full bg-indigo-600 text-white text-xs py-2 rounded-md font-bold hover:bg-indigo-700 transition shadow">Xong</button>
+                    <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <input type="url" id="orderLink3" class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-indigo-500 outline-none transition-all" placeholder="Link sản phẩm 3 (Không bắt buộc)" onfocus="showClassify(3)">
+                        <input type="text" id="orderClassify3" class="hidden w-full px-4 py-2 mt-2 border border-indigo-200 bg-white rounded-lg text-sm outline-none focus:border-indigo-500" placeholder="Nhập phân loại 3 (Màu sắc, Kích cỡ...)">
                     </div>
 
-                    <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
-                    <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
-                    <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
-                    <textarea id="extraNote" class="w-full px-4 py-2 mt-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="Ghi chú (Không bắt buộc)" rows="2"></textarea>
-                </div>
-                <div class="space-y-2 pt-4 border-t">
-    <h4 class="font-bold text-sm text-gray-800">Chọn loại mã áp dụng</h4>
-    <div class="grid grid-cols-2 gap-3">
-        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-blue-500 bg-blue-50">
-            <input type="radio" name="couponType" value="80" checked class="mr-2">
-            <div class="text-xs">
-                <p class="font-bold text-blue-600">Mã 80K</p>
-                <p class="text-gray-500">Phí: 30.000đ</p>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="number" id="orderQty" required min="1" value="1" class="w-full px-4 py-2 rounded-lg border" placeholder="Tổng SL">
+                        <input type="text" id="orderNote" class="w-full px-4 py-2 rounded-lg border" placeholder="Ghi chú chung cho đơn">
+                    </div>
+                    
+                    <div class="space-y-3 pt-4 border-t">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
+                            <button type="button" onclick="toggleFastFill()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition shadow-sm">
+                                <i class="fas fa-bolt mr-1"></i>Điền nhanh
+                            </button>
+                        </div>
+
+                        <div id="fastFillArea" class="hidden mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                            <textarea id="fastFillInput" class="w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Lười nhập thì dán cả cụm thông tin vào đây..." rows="3"></textarea>
+                            <button type="button" onclick="handleFastFill()" class="mt-2 w-full bg-indigo-600 text-white text-xs py-2 rounded-md font-bold hover:bg-indigo-700 transition shadow">Xong</button>
+                        </div>
+
+                        <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
+                        <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
+                        <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
+                        <textarea id="extraNote" class="w-full px-4 py-2 mt-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="Ghi chú cho Admin (Không bắt buộc)" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="space-y-2 pt-4 border-t">
+                        <h4 class="font-bold text-sm text-gray-800">Chọn loại mã áp dụng</h4>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-purple-500 bg-blue-50">
+                                <input type="radio" name="couponType" value="80" checked class="mr-2">
+                                <div class="text-xs">
+                                    <p class="font-bold text-blue-600">Mã 80K</p>
+                                    <p class="text-gray-500">Phí: 30.000đ</p>
+                                </div>
+                            </label>
+                            <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
+                                <input type="radio" name="couponType" value="100" class="mr-2">
+                                <div class="text-xs">
+                                    <p class="font-bold text-blue-600">Mã 100K (chưa có)</p>
+                                    <p class="text-gray-500">Phí: 40.000đ</p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end gap-3 mt-4 pt-4 border-t">
+                        <button type="button" onclick="closeOrderModal()" class="text-gray-500 hover:text-gray-700">Hủy</button>
+                        <button type="submit" id="submitOrderBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md transition">Gửi Đơn</button>
+                    </div>
+                </form>
             </div>
-        </label>
-        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
-            <input type="radio" name="couponType" value="100" class="mr-2">
-            <div class="text-xs">
-                <p class="font-bold text-blue-600">Mã 100K (chưa có)</p>
-                <p class="text-gray-500">Phí: 40.000đ</p>
-            </div>
-        </label>
-    </div>
-</div>
-                <div class="flex justify-end gap-3 mt-4">
-                    <button type="button" onclick="closeOrderModal()" class="text-gray-500">Hủy</button>
-                    <button type="submit" id="submitOrderBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Gửi Đơn</button>
-                </div>
-            </form>
         </div>
-    </div>
     </div> 
+    </div>
     </div> <div id="rulesPage" class="hidden min-h-screen pb-12">
 
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
@@ -435,19 +456,33 @@
         }
 
         function openOrderModal() { document.getElementById('orderModal').classList.remove('hidden'); }
-        function closeOrderModal() { document.getElementById('orderModal').classList.add('hidden'); document.getElementById('orderForm').reset(); }
-        document.querySelectorAll('input[name="couponType"]').forEach(radio => {
-    radio.addEventListener('change', function() {
-        document.querySelectorAll('input[name="couponType"]').forEach(r => {
-            r.closest('label').classList.remove('border-purple-500', 'bg-blue-50');
-            r.closest('label').classList.add('border-gray-200');
-        });
-        if (this.checked) {
-            this.closest('label').classList.remove('border-gray-200');
-            this.closest('label').classList.add('border-purple-500', 'bg-blue-50');
+        function closeOrderModal() { 
+            document.getElementById('orderModal').classList.add('hidden'); 
+            document.getElementById('orderForm').reset(); 
+
+            // 1. Ẩn lại toàn bộ các ô phân loại cho gọn gàng
+            document.getElementById('orderClassify').classList.add('hidden');
+            document.getElementById('orderClassify2').classList.add('hidden');
+            document.getElementById('orderClassify3').classList.add('hidden');
+
+            // 2. Trả lại màu sáng cho nút Mã 80K mặc định
+            document.querySelectorAll('input[name="couponType"]').forEach(r => {
+                if(r.value === "80") {
+                    r.closest('label').classList.remove('border-gray-200');
+                    r.closest('label').classList.add('border-purple-500', 'bg-blue-50');
+                } else {
+                    r.closest('label').classList.remove('border-purple-500', 'bg-blue-50');
+                    r.closest('label').classList.add('border-gray-200');
+                }
+            });
         }
-    });
-});
+
+        function showClassify(num) {
+            if(num === 1) document.getElementById('orderClassify').classList.remove('hidden');
+            if(num === 2) document.getElementById('orderClassify2').classList.remove('hidden');
+            if(num === 3) document.getElementById('orderClassify3').classList.remove('hidden');
+        } 
+
         function openDepositModal() {
             // 1. Tạo "áo khoác" ngụy trang cho giao dịch
             const nguoiTrang = ["tientk ", "thanhtoan ", "happy ", "autnap "];
@@ -757,21 +792,39 @@
             const totalAmount = qty * pricePerItem;
             // ------------------------------
 
+            // Gom 3 Link lại với nhau
+            let link1 = document.getElementById('orderLink').value.trim();
+            let link2 = document.getElementById('orderLink2') ? document.getElementById('orderLink2').value.trim() : "";
+            let link3 = document.getElementById('orderLink3') ? document.getElementById('orderLink3').value.trim() : "";
+            let combinedLinks = [link1, link2, link3].filter(l => l !== "").join('\n');
+
+            // Gom 3 Phân loại vào Ghi chú
+            let cls1 = document.getElementById('orderClassify') ? document.getElementById('orderClassify').value.trim() : "";
+            let cls2 = document.getElementById('orderClassify2') ? document.getElementById('orderClassify2').value.trim() : "";
+            let cls3 = document.getElementById('orderClassify3') ? document.getElementById('orderClassify3').value.trim() : "";
+            
+            // Gom 3 Phân loại vào Ghi chú (Chỉ gom nếu ô Link tương ứng có chứa dữ liệu)
+            let cls1 = document.getElementById('orderClassify') ? document.getElementById('orderClassify').value.trim() : "";
+            let cls2 = document.getElementById('orderClassify2') ? document.getElementById('orderClassify2').value.trim() : "";
+            let cls3 = document.getElementById('orderClassify3') ? document.getElementById('orderClassify3').value.trim() : "";
+            
+            let classifyStr = "";
+            if(link1 !== "" && cls1) classifyStr += ` | PL1: ${cls1}`;
+            if(link2 !== "" && cls2) classifyStr += ` | PL2: ${cls2}`;
+            if(link3 !== "" && cls3) classifyStr += ` | PL3: ${cls3}`;
+
+            let finalNote = `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value + classifyStr;
+
             fetch(API_URL, { 
                 method: 'POST', 
                 body: JSON.stringify({ 
                     action: "create_order", 
                     phone: currentUserPhone, 
-                    productLink: document.getElementById('orderLink').value, 
+                    productLink: combinedLinks, 
                     quantity: qty, 
-                    // Ghi chú sẽ bao gồm cả loại mã khách chọn để anh dễ kiểm soát
-                    note: `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value,
+                    note: finalNote,
                     extraNote: document.getElementById('extraNote').value,
-                    
-                    // Gộp 3 thông tin thành 1 chuỗi dài và nhét tất cả vào cột Tên Người Nhận
                     receiverName: document.getElementById('receiverName').value + " - " + document.getElementById('receiverPhone').value + " - " + document.getElementById('receiverAddress').value,
-                    
-                    // Để trống 2 cột còn lại để Sheet không bị rác
                     receiverPhone: "", 
                     receiverAddress: "",
                     totalAmount: totalAmount 
@@ -811,10 +864,15 @@
             openOrderModal();
 
             // 2. Điền thông tin cơ bản
-            document.getElementById('orderLink').value = oldOrder.link;
+            let oldLinks = oldOrder.link.split('\n');
+            if(oldLinks.length >= 1) { document.getElementById('orderLink').value = oldLinks[0]; showClassify(1); }
+            if(oldLinks.length >= 2 && document.getElementById('orderLink2')) { document.getElementById('orderLink2').value = oldLinks[1]; showClassify(2); }
+            if(oldLinks.length >= 3 && document.getElementById('orderLink3')) { document.getElementById('orderLink3').value = oldLinks[2]; showClassify(3); }
+            
             document.getElementById('orderQty').value = oldOrder.qty;
             let cleanNote = oldOrder.note.replace(/\[Mã \d+k\]\s*/g, '');
-            document.getElementById('orderNote').value = cleanNote;
+            cleanNote = cleanNote.split(' | PL1:')[0].split(' | PL2:')[0].split(' | PL3:')[0];
+            document.getElementById('orderNote').value = cleanNote; // Đổ cả phân loại cũ vào ghi chú để khách tự sửa
 
             // 3. LOGIC BÓC TÁCH THÔNG TIN NHẬN HÀNG
             if (oldOrder.receiverInfo) {
