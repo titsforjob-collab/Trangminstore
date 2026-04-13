@@ -133,7 +133,7 @@
 
                 <div onclick="openOrderListModal('completed')" class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-green-300 hover:bg-green-50 transition-all group relative">
                     <div>
-                        <p class="text-sm text-gray-500 mb-1 group-hover:text-green-700"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành</p>
+                        <p class="text-sm text-gray-500 mb-1 group-hover:text-green-700"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành ( nút đặt lại tiện lợi )</p>
                         <h4 class="text-2xl font-bold text-gray-900" id="countCompleted">0</h4>
                     </div>
                     <i class="fas fa-eye text-gray-300 group-hover:text-green-500 transition-colors text-xl"></i>
@@ -141,7 +141,7 @@
 
                 <div onclick="openOrderListModal('cancelled')" class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-red-300 hover:bg-red-50 transition-all group relative">
                     <div>
-                        <p class="text-sm text-gray-500 mb-1 group-hover:text-red-700"><i class="fas fa-times-circle text-red-500 mr-2"></i>Đơn huỷ</p>
+                        <p class="text-sm text-gray-500 mb-1 group-hover:text-red-700"><i class="fas fa-times-circle text-red-500 mr-2"></i>Đơn huỷ ( nút đặt lại tiện lợi )</p>
                         <h4 class="text-2xl font-bold text-gray-900" id="countCancelled">0</h4>
                     </div>
                     <i class="fas fa-eye text-gray-300 group-hover:text-red-500 transition-colors text-xl"></i>
@@ -529,9 +529,12 @@
         function renderOrderRow(o, targetTableBody) {
             let badgeClass = 'bg-yellow-100 text-yellow-600'; 
             const statusLower = o.status.toLowerCase();
+            
+            // Định nghĩa các nhóm trạng thái
             const isCancelled = statusLower.includes('huỷ') || statusLower.includes('hủy');
+            const isCompleted = statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao') || statusLower.includes('đã đặt');
 
-            if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+            if (isCompleted) {
                 badgeClass = 'bg-green-100 text-green-600';
             } else if (isCancelled) {
                 badgeClass = 'bg-red-100 text-red-600';
@@ -557,8 +560,11 @@
                 }
             });
 
-            // LOGIC NÚT ĐẶT LẠI: Chỉ hiện nếu đơn bị huỷ
-            const actionHTML = isCancelled 
+            // --- CẬP NHẬT LOGIC NÚT ĐẶT LẠI ---
+            // Nút hiện lên nếu đơn bị Huỷ HOẶC đã Hoàn thành
+            const canReorder = isCancelled || isCompleted;
+            
+            const actionHTML = canReorder 
                 ? `<button onclick="reorder('${o.orderId}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 transition active:scale-95 shadow-sm"><i class="fas fa-redo mr-1"></i>Đặt lại</button>`
                 : '<i class="text-gray-300 text-[10px]">N/A</i>';
 
