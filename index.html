@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Đặt Đơn Hàng</title>
+    <title>SHOPEE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -15,6 +15,7 @@
         .toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 500; transform: translateX(150%); transition: transform 0.3s ease; z-index: 50; }
         .toast.show { transform: translateX(0); }
         .toast.success { background-color: #10B981; }
+        .toast.error { background-color: #EF4444; }
         .status-cho-xu-ly { background-color: #FEF3C7; color: #D97706; }
         .status-da-dat { background-color: #D1FAE5; color: #059669; }
 
@@ -23,7 +24,7 @@
         .marquee-content { 
             display: inline-block; 
             padding-left: 100%; 
-            animation: marquee 20s linear infinite; 
+            animation: marquee 25s linear infinite; 
         }
         .marquee-content:hover {
             animation-play-state: paused; 
@@ -59,7 +60,7 @@
                     <input type="password" id="authPassword" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="••••••••">
                 </div>
 
-                <button type="submit" id="authBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">Vào hệ thống</button>
+                <button type="submit" id="authBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">Đăng nhập</button>
             </form>
 
             <div class="mt-6 text-center text-sm">
@@ -100,10 +101,11 @@
             </div>
         </nav>
         
-        <div class="bg-red-50 border-b border-red-100 text-red-600 py-2 marquee-container z-30 relative shadow-inner">
+        <div class="bg-red-50 border-b border-red-100 text-green-600 py-2 marquee-container z-30 relative shadow-inner">
             <div class="marquee-content text-sm font-bold">
                 <span class="mr-10">🔥Khách hàng được hỗ trợ ĐẶT TRƯỚC - TRẢ SAU! Cho phép trả sau tối đa 80.000đ. Cứ tự tin lên đơn nhé! 🔥</span>
-                <span class="mr-10">💸 Hết tiền không lo - Cứ để Trangmin.store lo! 💸</span>
+                <span class="mr-10">Lưu ý 1-1-1 : 1 địa chỉ - 1 đơn - 1 ngày ( nếu đã đặt ở chỗ khác thì ở đây cũng không được đâu hihi )</span>
+                <span class="mr-10">Để đơn có thể về được nhanh nhất và ổn định nhất nha</span>
             </div>
         </div>
 
@@ -189,6 +191,7 @@
                             <th class="px-6 py-3 text-center">SL</th>
                             <th class="px-6 py-3 text-left">MVD</th> 
                             <th class="px-6 py-3 text-left">Trạng thái</th>
+                            <th class="px-6 py-3 text-center">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody id="modalOrderTableBody" class="divide-y divide-gray-100 text-sm bg-white"></tbody>
@@ -237,7 +240,7 @@
         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
             <input type="radio" name="couponType" value="100" class="mr-2">
             <div class="text-xs">
-                <p class="font-bold text-blue-600">Mã 100K (New)</p>
+                <p class="font-bold text-blue-600">Mã 100K (chưa có)</p>
                 <p class="text-gray-500">Phí: 40.000đ</p>
             </div>
         </label>
@@ -461,7 +464,12 @@
                         showToast(data.message, 'success');
                         setTimeout(toggleAuthMode, 2000);
                     }
-                } else { showToast(data.message, 'error'); }
+                } else { showToast(data.message, 'error'); } // Lúc này showToast sẽ gọi cái màu đỏ anh vừa thêm
+            })
+            // ANH DÁN THÊM ĐOẠN CATCH NÀY VÀO ĐỂ CHỐNG KẸT NÚT KHI RỚT MẠNG
+            .catch(err => {
+                btn.textContent = isLoginMode ? 'Đăng nhập' : 'Tạo tài khoản'; btn.disabled = false;
+                showToast('Lỗi kết nối mạng, vui lòng thử lại!', 'error');
             });
         });
 
@@ -521,9 +529,11 @@
         function renderOrderRow(o, targetTableBody) {
             let badgeClass = 'bg-yellow-100 text-yellow-600'; 
             const statusLower = o.status.toLowerCase();
+            const isCancelled = statusLower.includes('huỷ') || statusLower.includes('hủy');
+
             if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
                 badgeClass = 'bg-green-100 text-green-600';
-            } else if (statusLower.includes('huỷ') || statusLower.includes('hủy')) {
+            } else if (isCancelled) {
                 badgeClass = 'bg-red-100 text-red-600';
             }
 
@@ -531,27 +541,26 @@
                 ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
                 : '<i class="text-xs text-gray-400">Chưa có</i>';
 
-            // --- LOGIC NHẬN DIỆN LINK THÔNG MINH ---
+            // Xử lý link sản phẩm/ảnh
             const linksArray = String(o.link).split('\n');
             let linksHTML = '';
             linksArray.forEach((url, index) => {
                 const linkStr = url.trim();
                 if(linkStr !== '') {
-                    // Nếu link chứa các từ khóa mua sắm thì hiện "Link SP"
-                    // Nếu không (khi anh đã đổi thành link ảnh), nó sẽ hiện "Ảnh đặt đơn"
                     let label = "Ảnh đặt đơn";
                     const lowUrl = linkStr.toLowerCase();
                     if (lowUrl.includes('shopee') || lowUrl.includes('tiktok') || lowUrl.includes('lazada') || lowUrl.includes('s.id')) {
                         label = "Link sản phẩm";
                     }
-                    
                     const icon = label === "Link sản phẩm" ? "fa-shopping-cart" : "fa-image";
-                    linksHTML += `
-                        <a href="${linkStr}" target="_blank" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium mb-2 bg-blue-50 px-2 py-1 rounded-md text-xs w-fit">
-                            <i class="fas ${icon} text-[10px]"></i> ${label} ${linksArray.length > 1 ? (index + 1) : ''}
-                        </a>`;
+                    linksHTML += `<a href="${linkStr}" target="_blank" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium mb-1 bg-blue-50 px-2 py-1 rounded-md text-[10px] w-fit"><i class="fas ${icon}"></i> ${label}</a>`;
                 }
             });
+
+            // LOGIC NÚT ĐẶT LẠI: Chỉ hiện nếu đơn bị huỷ
+            const actionHTML = isCancelled 
+                ? `<button onclick="reorder('${o.orderId}')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold hover:bg-indigo-700 transition active:scale-95 shadow-sm"><i class="fas fa-redo mr-1"></i>Đặt lại</button>`
+                : '<i class="text-gray-300 text-[10px]">N/A</i>';
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
@@ -560,9 +569,8 @@
                 <td class="px-6 py-4">${linksHTML}</td>
                 <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
                 <td class="px-6 py-4 text-indigo-600 font-semibold text-xs">${mvdDisplay}</td>
-                <td class="px-6 py-4">
-                    <span class="px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${badgeClass}">${o.status}</span>
-                </td>
+                <td class="px-6 py-4"><span class="px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${badgeClass}">${o.status}</span></td>
+                <td class="px-6 py-4 text-center">${actionHTML}</td>
             `;
             targetTableBody.appendChild(tr);
         }
@@ -739,6 +747,47 @@
             }).catch(() => {
                 showToast("Lỗi không thể copy, hãy bôi đen tay!", "error");
             });
+        }
+
+        function reorder(orderId) {
+            // Tìm thông tin đơn cũ trong bộ nhớ nháp
+            const oldOrder = allUserOrders.find(o => o.orderId === orderId);
+            if (!oldOrder) return;
+
+            // 1. Đóng bảng danh sách & Mở form đặt đơn
+            closeOrderListModal();
+            openOrderModal();
+
+            // 2. Điền thông tin cơ bản
+            document.getElementById('orderLink').value = oldOrder.link;
+            document.getElementById('orderQty').value = oldOrder.qty;
+            let cleanNote = oldOrder.note.replace(/\[Mã \d+k\]\s*/g, '');
+            document.getElementById('orderNote').value = cleanNote;
+
+            // 3. LOGIC BÓC TÁCH THÔNG TIN NHẬN HÀNG
+            if (oldOrder.receiverInfo) {
+                // Cắt chuỗi dựa vào khoảng trắng và dấu gạch ngang " - "
+                let parts = oldOrder.receiverInfo.split(" - ");
+                
+                // Nhét phần 1 vào Tên
+                if (parts.length >= 1) document.getElementById('receiverName').value = parts[0].trim();
+                
+                // Nhét phần 2 vào SĐT
+                if (parts.length >= 2) document.getElementById('receiverPhone').value = parts[1].trim();
+                
+                // Nhét toàn bộ phần còn lại vào Địa chỉ (Phòng trường hợp trong địa chỉ có chứa dấu gạch ngang)
+                if (parts.length >= 3) {
+                    let address = parts.slice(2).join(" - ").trim();
+                    document.getElementById('receiverAddress').value = address;
+                }
+            } else {
+                // Nếu đơn cũ không có thông tin thì làm trống các ô
+                document.getElementById('receiverName').value = "";
+                document.getElementById('receiverPhone').value = "";
+                document.getElementById('receiverAddress').value = "";
+            }
+
+            showToast("Đã sao chép toàn bộ thông tin đơn cũ!", "success");
         }
     </script>
 </body>
