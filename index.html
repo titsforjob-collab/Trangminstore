@@ -120,43 +120,33 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-6 mb-8">
-                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div onclick="openOrderListModal('pending')" class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-yellow-300 hover:bg-yellow-50 transition-all group relative">
                     <div>
-                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-clock text-yellow-500 mr-2"></i>Đang xử lý</p>
+                        <p class="text-sm text-gray-500 mb-1 group-hover:text-yellow-700"><i class="fas fa-clock text-yellow-500 mr-2"></i>Đang xử lý</p>
                         <h4 class="text-2xl font-bold text-gray-900" id="countPending">0</h4>
                     </div>
+                    <i class="fas fa-eye text-gray-300 group-hover:text-yellow-500 transition-colors text-xl"></i>
                 </div>
-                <div class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between">
+
+                <div onclick="openOrderListModal('completed')" class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-green-300 hover:bg-green-50 transition-all group relative">
                     <div>
-                        <p class="text-sm text-gray-500 mb-1"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành</p>
+                        <p class="text-sm text-gray-500 mb-1 group-hover:text-green-700"><i class="fas fa-check-circle text-green-500 mr-2"></i>Hoàn thành</p>
                         <h4 class="text-2xl font-bold text-gray-900" id="countCompleted">0</h4>
                     </div>
+                    <i class="fas fa-eye text-gray-300 group-hover:text-green-500 transition-colors text-xl"></i>
+                </div>
+
+                <div onclick="openOrderListModal('cancelled')" class="bg-white rounded-2xl shadow-sm border p-5 flex items-center justify-between cursor-pointer hover:shadow-md hover:border-red-300 hover:bg-red-50 transition-all group relative">
+                    <div>
+                        <p class="text-sm text-gray-500 mb-1 group-hover:text-red-700"><i class="fas fa-times-circle text-red-500 mr-2"></i>Đơn huỷ</p>
+                        <h4 class="text-2xl font-bold text-gray-900" id="countCancelled">0</h4>
+                    </div>
+                    <i class="fas fa-eye text-gray-300 group-hover:text-red-500 transition-colors text-xl"></i>
                 </div>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                <div class="px-6 py-4 border-b bg-gray-50 flex justify-between items-center">
-                    <h3 class="font-bold text-gray-900">Đơn hàng gần đây</h3>
-                    <button onclick="loadOrders()" class="text-blue-600 text-sm"><i class="fas fa-sync-alt mr-1"></i>Làm mới</button>
-                </div>
-                <div class="overflow-x-auto overflow-y-auto max-h-[400px]">
-                    <table class="min-w-full relative">
-                        <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th class="px-6 py-3 text-left">Mã đơn</th>
-                                <th class="px-6 py-3 text-left">Ngày đặt</th> <th class="px-6 py-3 text-left">Sản phẩm</th>
-                                <th class="px-6 py-3 text-center">SL</th>
-                                <th class="px-6 py-3 text-left">MVD</th> 
-                                <th class="px-6 py-3 text-left">Trạng thái</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orderTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+             
     
     <div id="depositModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
@@ -174,6 +164,36 @@
             </div>
 
             <button onclick="closeDepositModal()" class="w-full bg-gray-200 text-gray-700 hover:bg-gray-300 px-6 py-2 rounded-lg font-bold transition">Đóng</button>
+        </div>
+    </div>
+    
+    <div id="orderListModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl p-6 max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-xl text-gray-800" id="orderListModalTitle">Danh sách đơn hàng</h3>
+                
+                <div class="flex items-center gap-4">
+                    <button onclick="refreshModalData()" id="modalRefreshBtn" class="text-blue-600 hover:text-blue-800 transition flex items-center text-sm font-bold bg-blue-50 px-3 py-1.5 rounded-lg active:scale-95">
+                        <i class="fas fa-sync-alt mr-2"></i> Làm mới
+                    </button>
+                    <button onclick="closeOrderListModal()" class="text-gray-400 hover:text-red-500 transition ml-2"><i class="fas fa-times text-2xl"></i></button>
+                </div>
+            </div>
+            <div class="overflow-y-auto flex-1 border rounded-xl shadow-inner bg-gray-50" style="max-height: 65vh;">
+                <table class="min-w-full relative">
+                    <thead class="bg-white text-xs text-gray-500 uppercase sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th class="px-6 py-3 text-left">Mã đơn</th>
+                            <th class="px-6 py-3 text-left">Ngày đặt</th>
+                            <th class="px-6 py-3 text-left">Sản phẩm</th>
+                            <th class="px-6 py-3 text-center">SL</th>
+                            <th class="px-6 py-3 text-left">MVD</th> 
+                            <th class="px-6 py-3 text-left">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalOrderTableBody" class="divide-y divide-gray-100 text-sm bg-white"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -230,7 +250,9 @@
             </form>
         </div>
     </div>
-    <div id="rulesPage" class="hidden min-h-screen pb-12">
+    </div> 
+    </div> <div id="rulesPage" class="hidden min-h-screen pb-12">
+
         <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
             <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
@@ -296,6 +318,7 @@
         let isLoginMode = true;
         let currentUserPhone = localStorage.getItem('userPhone') || null;
         let currentUserName = localStorage.getItem('userName') || "...";
+        let allUserOrders = []; // Bộ nhớ nháp lưu tất cả đơn hàng
 
         window.onload = () => {
             if (currentUserPhone) {
@@ -494,72 +517,163 @@
         }
         // ==========================================
 
-        // TẠO ĐƠN & LOAD ĐƠN (Giữ nguyên logic cũ nhưng đổi màu trạng thái)
-        function loadOrders() {
-            const table = document.getElementById('orderTableBody');
-            table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Đang tải đơn...</td></tr>';
+         
+        function renderOrderRow(o, targetTableBody) {
+            let badgeClass = 'bg-yellow-100 text-yellow-600'; 
+            const statusLower = o.status.toLowerCase();
+            if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                badgeClass = 'bg-green-100 text-green-600';
+            } else if (statusLower.includes('huỷ') || statusLower.includes('hủy')) {
+                badgeClass = 'bg-red-100 text-red-600';
+            }
+
+            const mvdDisplay = o.mvd 
+                ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
+                : '<i class="text-xs text-gray-400">Chưa có</i>';
+
+            // --- LOGIC NHẬN DIỆN LINK THÔNG MINH ---
+            const linksArray = String(o.link).split('\n');
+            let linksHTML = '';
+            linksArray.forEach((url, index) => {
+                const linkStr = url.trim();
+                if(linkStr !== '') {
+                    // Nếu link chứa các từ khóa mua sắm thì hiện "Link SP"
+                    // Nếu không (khi anh đã đổi thành link ảnh), nó sẽ hiện "Ảnh đặt đơn"
+                    let label = "Ảnh đặt đơn";
+                    const lowUrl = linkStr.toLowerCase();
+                    if (lowUrl.includes('shopee') || lowUrl.includes('tiktok') || lowUrl.includes('lazada') || lowUrl.includes('s.id')) {
+                        label = "Link sản phẩm";
+                    }
+                    
+                    const icon = label === "Link sản phẩm" ? "fa-shopping-cart" : "fa-image";
+                    linksHTML += `
+                        <a href="${linkStr}" target="_blank" class="flex items-center gap-1 text-blue-600 hover:text-blue-800 hover:underline font-medium mb-2 bg-blue-50 px-2 py-1 rounded-md text-xs w-fit">
+                            <i class="fas ${icon} text-[10px]"></i> ${label} ${linksArray.length > 1 ? (index + 1) : ''}
+                        </a>`;
+                }
+            });
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-6 py-4 font-bold text-gray-400 text-xs">${String(o.orderId).slice(-6)}</td>
+                <td class="px-6 py-4 text-gray-500 text-[11px] leading-tight">${o.date}</td>
+                <td class="px-6 py-4">${linksHTML}</td>
+                <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
+                <td class="px-6 py-4 text-indigo-600 font-semibold text-xs">${mvdDisplay}</td>
+                <td class="px-6 py-4">
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap ${badgeClass}">${o.status}</span>
+                </td>
+            `;
+            targetTableBody.appendChild(tr);
+        }
+
+        let currentModalType = ''; // Biến để nhớ xem khách đang mở tab Đang xử lý, Hoàn thành hay Huỷ
+
+        // 1. Hàm mở Modal mới (Đã cập nhật để nhớ Tab đang mở)
+        function openOrderListModal(type) {
+            currentModalType = type; // Lưu lại loại đang mở
+            const modalBody = document.getElementById('modalOrderTableBody');
+            const modalTitle = document.getElementById('orderListModalTitle');
+            modalBody.innerHTML = '';
+            
+            let filteredOrders = [];
+            
+            if (type === 'pending') {
+                modalTitle.innerHTML = '<i class="fas fa-clock text-yellow-500 mr-2"></i> Đơn đang xử lý';
+                filteredOrders = allUserOrders.filter(o => {
+                    const s = o.status.toLowerCase();
+                    return s.includes('chờ') || s.includes('đang');
+                });
+            } else if (type === 'completed') {
+                modalTitle.innerHTML = '<i class="fas fa-check-circle text-green-500 mr-2"></i> Đơn hoàn thành';
+                filteredOrders = allUserOrders.filter(o => {
+                    const s = o.status.toLowerCase();
+                    return s.includes('hoàn thành') || s.includes('thành công') || s.includes('đã giao');
+                });
+            } else if (type === 'cancelled') {
+                modalTitle.innerHTML = '<i class="fas fa-times-circle text-red-500 mr-2"></i> Đơn hàng đã huỷ';
+                filteredOrders = allUserOrders.filter(o => {
+                    const s = o.status.toLowerCase();
+                    return s.includes('huỷ') || s.includes('hủy');
+                });
+            }
+
+            if (filteredOrders.length > 0) {
+                filteredOrders.forEach(o => renderOrderRow(o, modalBody));
+            } else {
+                modalBody.innerHTML = '<tr><td colspan="6" class="text-center p-6 text-gray-500">Chưa có đơn hàng nào trong mục này</td></tr>';
+            }
+
+            document.getElementById('orderListModal').classList.remove('hidden');
+        }
+
+        // 2. HÀM LÀM MỚI DỮ LIỆU TỪ NÚT BẤM (Anh đang thiếu hàm này)
+        function refreshModalData() {
+            const btnIcon = document.querySelector('#modalRefreshBtn i');
+            btnIcon.classList.add('fa-spin'); // Bật hiệu ứng xoay tròn
+            
             fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "get_orders", phone: currentUserPhone }) })
             .then(res => res.json())
             .then(data => {
-                table.innerHTML = '';
-                // 1. Khai báo 2 biến để đếm số lượng
-                let countPending = 0;
-                let countCompleted = 0;
+                btnIcon.classList.remove('fa-spin'); // Tắt hiệu ứng xoay
+                let countPending = 0; let countCompleted = 0; let countCancelled = 0;
 
                 if(data.orders && data.orders.length > 0) {
-                    data.orders.forEach(o => {
-                        // 2. Phân loại trạng thái để đếm
+                    allUserOrders = data.orders;
+                    allUserOrders.forEach(o => {
                         const statusLower = o.status.toLowerCase();
-                        if (statusLower.includes('chờ') || statusLower.includes('đang')) {
-                            countPending++; // Nếu trạng thái có chữ "chờ" hoặc "đang" thì +1 vào Đang xử lý
-                        } else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
-                            countCompleted++; // Nếu có chữ "hoàn thành" hoặc "thành công" thì +1 vào Hoàn thành
-                        }
-
-                        // 3. Vẫn vẽ bảng danh sách đơn như cũ
-                        // 3. Xử lý màu sắc và chữ cho Badge trạng thái
-                        let badgeClass = 'bg-yellow-100 text-yellow-600'; // Mặc định màu vàng
-                        // Nếu trạng thái có chữ hoàn thành, đã đặt, thành công... thì chuyển sang màu xanh lá
-                        if (statusLower.includes('hoàn thành') || statusLower.includes('đã đặt') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
-                            badgeClass = 'bg-green-100 text-green-600';
-                        }
-
-                        
-                        // 4. Xử lý hiển thị MVD
-                        const mvdDisplay = o.mvd 
-                            ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
-                            : '<i class="text-xs text-gray-400">Chưa có</i>';
-
-                        // KHÔI PHỤC LẠI ĐOẠN TÁCH MULTI-LINK BỊ MẤT
-                        const linksArray = String(o.link).split('\n');
-                        let linksHTML = '';
-                        linksArray.forEach((url, index) => {
-                            if(url.trim() !== '') {
-                                linksHTML += `<a href="${url.trim()}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline block mb-1">Link ${index + 1}</a>`;
-                            }
-                        });
-
-                        // 5. Vẽ bảng (Đã có cả Ngày đặt và Link)
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="px-6 py-4 font-bold text-gray-500">${String(o.orderId).slice(-6)}</td>
-                            <td class="px-6 py-4 text-gray-500 text-xs leading-tight">${o.date}</td>
-                            <td class="px-6 py-4 text-sm">${linksHTML}</td>
-                            <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
-                            <td class="px-6 py-4 text-indigo-600 font-semibold">${mvdDisplay}</td>
-                            <td class="px-6 py-4">
-                                <span class="px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap ${badgeClass}">${o.status}</span>
-                            </td>
-                        `;
-                        table.appendChild(tr);
+                        if (statusLower.includes('chờ') || statusLower.includes('đang')) countPending++; 
+                        else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao')) countCompleted++; 
+                        else if (statusLower.includes('huỷ') || statusLower.includes('hủy')) countCancelled++; 
                     });
-                } else { 
-                    table.innerHTML = '<tr><td colspan="4" class="text-center p-4">Chưa có đơn nào</td></tr>'; 
                 }
                 
-                // 4. Bắn con số vừa đếm được lên giao diện
+                // Cập nhật lại số liệu bên ngoài 3 ô
                 document.getElementById('countPending').textContent = countPending;
                 document.getElementById('countCompleted').textContent = countCompleted;
+                document.getElementById('countCancelled').textContent = countCancelled;
+                
+                // Vẽ lại bảng bên trong dựa trên dữ liệu mới nhất
+                openOrderListModal(currentModalType); 
+                showToast("Đã tải dữ liệu mới nhất!", "success");
+            }).catch(err => {
+                btnIcon.classList.remove('fa-spin');
+                showToast("Lỗi kết nối, vui lòng thử lại!", "error");
+            });
+        }
+
+        function closeOrderListModal() {
+            document.getElementById('orderListModal').classList.add('hidden');
+        }
+
+        // 3. LOAD ĐƠN (Đã tối ưu chỉ hiện tối đa 2 đơn mới nhất)
+        function loadOrders() {
+            // Vì đã xoá bảng chính nên không cần table.innerHTML nữa
+            fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: "get_orders", phone: currentUserPhone }) })
+            .then(res => res.json())
+            .then(data => {
+                let countPending = 0;
+                let countCompleted = 0;
+                let countCancelled = 0;
+
+                if(data.orders && data.orders.length > 0) {
+                    allUserOrders = data.orders;
+                    allUserOrders.forEach(o => {
+                        const statusLower = o.status.toLowerCase();
+                        if (statusLower.includes('chờ') || statusLower.includes('đang')) {
+                            countPending++; 
+                        } else if (statusLower.includes('hoàn thành') || statusLower.includes('thành công') || statusLower.includes('đã giao')) {
+                            countCompleted++; 
+                        } else if (statusLower.includes('huỷ') || statusLower.includes('hủy')) {
+                            countCancelled++; 
+                        }
+                    });
+                }
+                
+                // Cập nhật số đếm lên 3 ô
+                document.getElementById('countPending').textContent = countPending;
+                document.getElementById('countCompleted').textContent = countCompleted;
+                document.getElementById('countCancelled').textContent = countCancelled;
             });
         }
 
