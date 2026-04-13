@@ -6,6 +6,7 @@
     <title>Hệ Thống Đặt Đơn Hàng</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
@@ -14,9 +15,23 @@
         .toast { position: fixed; top: 20px; right: 20px; padding: 15px 25px; border-radius: 8px; color: white; font-weight: 500; transform: translateX(150%); transition: transform 0.3s ease; z-index: 50; }
         .toast.show { transform: translateX(0); }
         .toast.success { background-color: #10B981; }
-        .toast.error { background-color: #EF4444; }
         .status-cho-xu-ly { background-color: #FEF3C7; color: #D97706; }
         .status-da-dat { background-color: #D1FAE5; color: #059669; }
+
+        /* ===== ANH DÁN ĐOẠN ĐỘNG CƠ CHẠY CHỮ VÀO ĐÂY ===== */
+        .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; }
+        .marquee-content { 
+            display: inline-block; 
+            padding-left: 100%; 
+            animation: marquee 20s linear infinite; 
+        }
+        .marquee-content:hover {
+            animation-play-state: paused; 
+        }
+        @keyframes marquee {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-100%, 0); }
+        }
     </style>
 </head>
 <body>
@@ -84,6 +99,13 @@
 
             </div>
         </nav>
+        
+        <div class="bg-red-50 border-b border-red-100 text-red-600 py-2 marquee-container z-30 relative shadow-inner">
+            <div class="marquee-content text-sm font-bold">
+                <span class="mr-10">🔥Khách hàng được hỗ trợ ĐẶT TRƯỚC - TRẢ SAU! Cho phép trả sau tối đa 80.000đ (Tương đương 2 đơn hàng). Cứ tự tin lên đơn nhé! 🔥</span>
+                <span class="mr-10">💸 Hết tiền không lo - Cứ để Trangmin.store lo! 💸</span>
+            </div>
+        </div>
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -123,9 +145,10 @@
                         <thead class="bg-gray-50 text-xs text-gray-500 uppercase sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th class="px-6 py-3 text-left">Mã đơn</th>
-                                <th class="px-6 py-3 text-left">Sản phẩm</th>
+                                <th class="px-6 py-3 text-left">Ngày đặt</th> <th class="px-6 py-3 text-left">Sản phẩm</th>
                                 <th class="px-6 py-3 text-center">SL</th>
-                                <th class="px-6 py-3 text-left">MVD</th> <th class="px-6 py-3 text-left">Trạng thái</th>
+                                <th class="px-6 py-3 text-left">MVD</th> 
+                                <th class="px-6 py-3 text-left">Trạng thái</th>
                             </tr>
                         </thead>
                         <tbody id="orderTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
@@ -164,7 +187,18 @@
                     <input type="text" id="orderNote" class="w-full px-4 py-2 rounded-lg border" placeholder="Ghi chú (Màu/Size)">
                 </div>
                 <div class="space-y-3 pt-4 border-t">
-                    <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
+                    <div class="flex justify-between items-center mb-2">
+                        <h4 class="font-bold text-sm text-gray-800">Thông tin nhận hàng</h4>
+                        <button type="button" onclick="toggleFastFill()" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-200 hover:bg-indigo-100 transition shadow-sm">
+                            <i class="fas fa-bolt mr-1"></i>Điền nhanh
+                        </button>
+                    </div>
+
+                    <div id="fastFillArea" class="hidden mb-4 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <textarea id="fastFillInput" class="w-full px-3 py-2 text-sm rounded-md border focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Lười nhập thì dán cả cụm thông tin vào đây (Ví dụ: Thị nở xink 0123456789 thôn cành lá xã cành cây huyện gió mây tỉnh đổi núi...)" rows="3"></textarea>
+                        <button type="button" onclick="handleFastFill()" class="mt-2 w-full bg-indigo-600 text-white text-xs py-2 rounded-md font-bold hover:bg-indigo-700 transition shadow">Xong</button>
+                    </div>
+
                     <input type="text" id="receiverName" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Tên người nhận">
                     <input type="tel" id="receiverPhone" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Số điện thoại nhận">
                     <textarea id="receiverAddress" required class="w-full px-4 py-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Địa chỉ chi tiết (Số nhà, Xã, Huyện, Tỉnh)" rows="2"></textarea>
@@ -177,14 +211,14 @@
             <input type="radio" name="couponType" value="80" checked class="mr-2">
             <div class="text-xs">
                 <p class="font-bold text-blue-600">Mã 80K</p>
-                <p class="text-gray-500">Phí: 31.000đ</p>
+                <p class="text-gray-500">Phí: 30.000đ</p>
             </div>
         </label>
         <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-50 transition border-gray-200">
             <input type="radio" name="couponType" value="100" class="mr-2">
             <div class="text-xs">
                 <p class="font-bold text-blue-600">Mã 100K (hiện đang hết)</p>
-                <p class="text-gray-500">Phí: 41.000đ</p>
+                <p class="text-gray-500">Phí: 40.000đ</p>
             </div>
         </label>
     </div>
@@ -408,6 +442,58 @@
             });
         });
 
+        // ==========================================
+        // TÍNH NĂNG ĐIỀN NHANH BẰNG AI GEMINI
+        // ==========================================
+        function toggleFastFill() {
+            document.getElementById('fastFillArea').classList.toggle('hidden');
+        }
+
+        function handleFastFill() {
+            const rawText = document.getElementById('fastFillInput').value.trim();
+            if (!rawText) {
+                showToast("Người đẹp quên điền thông tin!", "error");
+                return;
+            }
+
+            const btn = document.querySelector('#fastFillArea button');
+            const oldText = btn.textContent;
+            btn.textContent = 'Đang kiểm tra thông tin';
+            btn.disabled = true;
+            btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+            // Gọi lên Google Script nhờ AI xử lý
+            fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: "parse_ai", text: rawText })
+            })
+            .then(res => res.json())
+            .then(data => {
+                btn.textContent = oldText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                
+                if(data.success && data.data) {
+                    // Điền kết quả AI trả về vào các ô
+                    if (data.data.name) document.getElementById('receiverName').value = data.data.name;
+                    if (data.data.phone) document.getElementById('receiverPhone').value = data.data.phone;
+                    if (data.data.address) document.getElementById('receiverAddress').value = data.data.address;
+                    
+                    showToast("Thông tin hợp lệ!", "success");
+                    toggleFastFill(); // Đóng ô điền nhanh đi cho gọn
+                    document.getElementById('fastFillInput').value = ""; // Xóa text thừa
+                } else {
+                    showToast(data.message || "Không tìm thấy thông tin hợp lệ, vui lòng điền thông tin chính xác!", "error");
+                }
+            }).catch(err => {
+                btn.textContent = oldText;
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                showToast("Mất kết nối thử đăng xuất và vào lại!", "error");
+            });
+        }
+        // ==========================================
+
         // TẠO ĐƠN & LOAD ĐƠN (Giữ nguyên logic cũ nhưng đổi màu trạng thái)
         function loadOrders() {
             const table = document.getElementById('orderTableBody');
@@ -438,16 +524,27 @@
                             badgeClass = 'bg-green-100 text-green-600';
                         }
 
-                        // 4. Xử lý hiển thị MVD (nếu chưa có thì hiện chữ "Chưa có")
+                        
+                        // 4. Xử lý hiển thị MVD
                         const mvdDisplay = o.mvd 
-    ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
-    : '<i class="text-xs text-gray-400">Chưa có</i>';
+                            ? `<span onclick="copyMVD('${o.mvd}')" class="cursor-pointer hover:text-indigo-800 hover:underline flex items-center gap-1 active:scale-95 transition-transform" title="Bấm để copy">${o.mvd} <i class="fas fa-copy text-xs opacity-60"></i></span>` 
+                            : '<i class="text-xs text-gray-400">Chưa có</i>';
 
-                        // 5. Vẽ bảng (đã thêm whitespace-nowrap vào cột trạng thái để chống xuống dòng)
+                        // KHÔI PHỤC LẠI ĐOẠN TÁCH MULTI-LINK BỊ MẤT
+                        const linksArray = String(o.link).split('\n');
+                        let linksHTML = '';
+                        linksArray.forEach((url, index) => {
+                            if(url.trim() !== '') {
+                                linksHTML += `<a href="${url.trim()}" target="_blank" class="text-blue-600 hover:text-blue-800 hover:underline block mb-1">Link ${index + 1}</a>`;
+                            }
+                        });
+
+                        // 5. Vẽ bảng (Đã có cả Ngày đặt và Link)
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td class="px-6 py-4 font-bold text-gray-500">${o.orderId.slice(-6)}</td>
-                            <td class="px-6 py-4 truncate max-w-[150px]"><a href="${o.link}" target="_blank" class="text-blue-600">Link</a></td>
+                            <td class="px-6 py-4 font-bold text-gray-500">${String(o.orderId).slice(-6)}</td>
+                            <td class="px-6 py-4 text-gray-500 text-xs leading-tight">${o.date}</td>
+                            <td class="px-6 py-4 text-sm">${linksHTML}</td>
                             <td class="px-6 py-4 text-center font-bold">${o.qty}</td>
                             <td class="px-6 py-4 text-indigo-600 font-semibold">${mvdDisplay}</td>
                             <td class="px-6 py-4">
