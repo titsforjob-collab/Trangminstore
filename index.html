@@ -36,6 +36,39 @@
     </style>
 </head>
 <body>
+<div id="zaloOverlay" class="hidden fixed inset-0 bg-slate-900 bg-opacity-95 z-[9999] flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm text-white">
+        <div class="mb-6 w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(37,99,235,0.6)] animate-bounce">
+            <i class="fab fa-chrome text-4xl text-white"></i>
+        </div>
+        
+        <h2 class="text-2xl font-black mb-3 text-blue-400 uppercase tracking-wide">Khoan đã bạn ơi!</h2>
+        <p class="mb-6 text-gray-200 text-base leading-relaxed max-w-sm">
+            Hệ thống không hoạt động tốt trên Zalo.<br>
+            Vui lòng bấm vào <strong class="bg-gray-800 px-2 py-1 rounded text-white mx-1 border border-gray-600"><i class="fas fa-ellipsis-h"></i> Dấu 3 chấm</strong> ở góc trên bên phải màn hình.
+        </p>
+        
+        <div class="w-full max-w-[280px] bg-white text-gray-800 rounded-xl overflow-hidden shadow-2xl">
+            <div class="bg-gray-100 p-3 flex justify-between items-center border-b">
+                <span class="text-xs text-gray-500 font-bold">Trangmin.store</span>
+                <i class="fas fa-ellipsis-h text-gray-600 text-lg"></i>
+            </div>
+            <div class="p-2">
+                <div class="flex items-center gap-3 p-3 text-gray-600">
+                    <i class="fas fa-share-alt w-5 text-center"></i>
+                    <span class="text-sm font-semibold">Chia sẻ</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 bg-blue-50 text-blue-600 rounded-lg border border-blue-100">
+                    <i class="fas fa-globe w-5 text-center text-lg"></i>
+                    <span class="text-sm font-bold">Mở bằng trình duyệt</span>
+                </div>
+                <div class="flex items-center gap-3 p-3 text-gray-600">
+                    <i class="fas fa-link w-5 text-center"></i>
+                    <span class="text-sm font-semibold">Copy link</span>
+                </div>
+            </div>
+        </div>
+        <p class="mt-6 text-xs text-gray-400 italic">*Chọn "Mở bằng trình duyệt" để tiếp tục tạo đơn.</p>
+    </div>
 
     <div id="authPage" class="min-h-screen flex items-center justify-center p-4">
         <div class="glass-effect p-8 rounded-2xl shadow-xl w-full max-w-md border border-gray-100">
@@ -79,7 +112,7 @@
                         <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-md">
                             <i class="fas fa-box-open text-white text-sm"></i>
                         </div>
-                        <span class="font-extrabold text-lg md:text-xl text-transparent bg-clip-text bg-gradient-to-r from-blue-700 to-indigo-600 tracking-tight">Trangmin.store</span>
+                        <span class="font-extrabold text-lg md:text-xl text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-indigo-600 tracking-tight">Trangmin.store</span>
                     </div>
                     
                     <div class="hidden sm:block w-px h-5 bg-gray-300"></div>
@@ -118,7 +151,7 @@
                 </div>
                 <div class="bg-white rounded-2xl shadow-sm border p-6 text-center">
                     <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-4"><i class="fas fa-plus"></i></div>
-                    <button onclick="openOrderModal()" class="w-full bg-gray-900 text-white py-2 rounded-lg font-medium">Tạo đơn mới</button>
+                    <button onclick="openOrderModal()" class="w-full bg-purple-600 to-fuchsia-300 text-white py-2 rounded-lg font-medium">Tạo đơn mới</button>
                 </div>
             </div>
 
@@ -316,6 +349,19 @@
     <div id="toast" class="toast"></div>
 
     <script>
+
+    // --- KIỂM TRA & CHẶN TRÌNH DUYỆT ZALO ---
+        function checkInAppBrowser() {
+            const ua = navigator.userAgent || navigator.vendor || window.opera;
+            // Nếu phát hiện chữ Zalo trong hệ thống nhận diện
+            if (ua.indexOf("Zalo") > -1) {
+                document.getElementById('zaloOverlay').classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Khóa cứng không cho cuộn trang
+            }
+        }
+        checkInAppBrowser(); // Gọi hàm quét ngay lập tức khi vào web
+        // ----------------------------------------
+
         const API_URL = "https://script.google.com/macros/s/AKfycbxXFjzKLhHv5OTMMyGtSiIG9QLnnjvTEItOCZf6leDBiK0r9ZazGZ_QkCma9GwO7nCezQ/exec"; // QUAN TRỌNG: Dán link API của anh vào đây!
 
         let isLoginMode = true;
