@@ -497,9 +497,12 @@
                     note: `[Mã ${couponValue}k] ` + document.getElementById('orderNote').value,
                     extraNote: document.getElementById('extraNote').value,
                     
-                    receiverName: document.getElementById('receiverName').value,
-                    receiverPhone: document.getElementById('receiverPhone').value,
-                    receiverAddress: document.getElementById('receiverAddress').value,
+                    // Gộp 3 thông tin thành 1 chuỗi dài và nhét tất cả vào cột Tên Người Nhận
+                    receiverName: document.getElementById('receiverName').value + " - " + document.getElementById('receiverPhone').value + " - " + document.getElementById('receiverAddress').value,
+                    
+                    // Để trống 2 cột còn lại để Sheet không bị rác
+                    receiverPhone: "", 
+                    receiverAddress: "",
                     totalAmount: totalAmount 
                 }) 
             })
