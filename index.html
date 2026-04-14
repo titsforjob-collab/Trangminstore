@@ -794,7 +794,16 @@
 
              
  
-            // Gom 3 Phân loại vào Ghi chú (Chỉ gom nếu ô Link tương ứng có chứa dữ liệu)
+            // 1. LẤY DỮ LIỆU TỪ CÁC Ô LINK VÀ GỘP LẠI (THÊM ĐOẠN NÀY)
+            let link1 = document.getElementById('orderLink').value.trim();
+            let link2 = document.getElementById('orderLink2') ? document.getElementById('orderLink2').value.trim() : "";
+            let link3 = document.getElementById('orderLink3') ? document.getElementById('orderLink3').value.trim() : "";
+
+            let combinedLinks = link1;
+            if(link2 !== "") combinedLinks += "\n" + link2;
+            if(link3 !== "") combinedLinks += "\n" + link3;
+
+            // 2. Gom 3 Phân loại vào Ghi chú
             let cls1 = document.getElementById('orderClassify') ? document.getElementById('orderClassify').value.trim() : "";
             let cls2 = document.getElementById('orderClassify2') ? document.getElementById('orderClassify2').value.trim() : "";
             let cls3 = document.getElementById('orderClassify3') ? document.getElementById('orderClassify3').value.trim() : "";
